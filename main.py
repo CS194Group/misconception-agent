@@ -13,10 +13,10 @@ from dspy.evaluate import Evaluate
 from colorama import Fore, Style, init
 from dspy.teleprompt import BootstrapFewShot
 
-from Agents import Agent
-from Evaluation import evaluate_answers
+from src.agents import Agent
+from src.evaluation import evaluate_answers
 from src.predict_model import ExchangeOfThought
-from Dataloader import load_data, load_misconceptions
+from src.dataloader import load_data, load_misconceptions
 
 # Initialize colorama
 init(autoreset=True)
@@ -48,15 +48,18 @@ if __name__ == "__main__":
     agent_c = Agent(name="Agent C")
 
     # evaluate
-    evaluate_program = Evaluate(devset=test_data, metric=evaluate_answers, num_threads=8, display_progress=True, display_table=10)
-    predict = ExchangeOfThought(agent_a, agent_b, agent_c, rounds=3, mode="Report")
+    evaluate_program = Evaluate(devset=test_data, metric=evaluate_answers,
+                                num_threads=8, display_progress=True, display_table=10)
+    predict = ExchangeOfThought(
+        agent_a, agent_b, agent_c, rounds=3, mode="Report")
     eval1 = evaluate_program(predict)
 
     # compile
-    teleprompter = BootstrapFewShot(metric=evaluate_answers, max_labeled_demos=1)
+    teleprompter = BootstrapFewShot(
+        metric=evaluate_answers, max_labeled_demos=1)
     compiled_predictor = teleprompter.compile(predict, trainset=train_data)
 
     # evaluate again
-    eval_compiled = evaluate_program(compiled_predictor)
-    compiled_predictor.save('./compiled_model.pkl')
-    print(eval_compiled)
+    # eval_compiled = evaluate_program(compiled_predictor)
+    # compiled_predictor.save('./compiled_model.pkl')
+    # print(eval_compiled)

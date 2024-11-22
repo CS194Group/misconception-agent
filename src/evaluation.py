@@ -1,9 +1,11 @@
-from Agents import MisconceptionDB, SummeryAgent
+from src.agents import MisconceptionDB, SummeryAgent
 
 retrieve_model = MisconceptionDB("./data/misconception_mapping.csv")
 summery_agent = SummeryAgent(name='Summery Agent')
 
 # Evaluating the answer
+
+
 def evaluate_answers(gold, pred, trace=None):
 
     try:
@@ -12,7 +14,8 @@ def evaluate_answers(gold, pred, trace=None):
 
         final_index = []
         for mis in [mis_out.misconceptionA, mis_out.misconceptionB, mis_out.misconceptionC, mis_out.misconceptionD]:
-            final_index.append(retrieve_model.hybrid_search(mis)[0].misconception_id)
+            final_index.append(retrieve_model.hybrid_search(mis)[
+                               0].misconception_id)
 
         for i, mis in enumerate(final_index):
             if mis == gold_answer_id[i]:
@@ -21,4 +24,3 @@ def evaluate_answers(gold, pred, trace=None):
 
     except:
         return False
-    
