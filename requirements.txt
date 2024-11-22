@@ -1,0 +1,16 @@
+pytest
+dspy
+ipdb==0.13.13
+jsonlines==4.0.0
+langchain_community==0.3.5
+langchain_huggingface==0.1.2
+numpy
+openai
+pandas
+pydantic
+pytest==8.3.3
+scikit_learn==1.4.2
+tenacity
+
+python-dotenv
+colorama
