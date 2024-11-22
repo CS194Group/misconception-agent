@@ -1,67 +1,53 @@
-# Math agent
+# Multi-Agent Misconception Analysis System
 
-> This is a group project of cs 194/294 that focusing on finding the misconceptions in the math problems. 
+A multi-agent system designed to enhance learning environments by predicting student misconceptions based on their answers to questions. This project uses **dspy** and **OpenAI** to process questions, generate potential misconceptions, and evaluate semantic similarities between these misconceptions, facilitating a deeper understanding of student reasoning.
+
+## Features
+
+- **Multi-Agent Communication**: Implements the Exchange-of-Thought (EoT) framework inspired by large language model communication paradigms like Memory, Report, Relay, and Debate.
+- **Misconception Prediction**: Identifies the reasoning behind incorrect answers provided by students.
+- **Semantic Evaluation**: Analyzes and ranks misconceptions based on their similarity to student reasoning.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- `dspy` library
+- OpenAI API key
 
 ### Installation
 
-> Basically, this repo just need two main dependency, you may fix the import error when you encounter them in specific file.
+1. Clone the repository:
 
-```
-pip install dspy
-pip install pydantic
-```
+   ```bash
+   git clone https://github.com/CS194Group/multi-agent-misconceptions.git
+   cd multi-agent-misconceptions
+   ```
 
-### Folder Explainations
+2. Install required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-#### *agents*
+### Usage
 
-> This contains the old version of agents that we're using. 
->
-> 1. BasexxxAgent: represent basic agents that only consist of a single CoT.
-> 2. AgentGroup: use BaseAgent to construct larger architecture.
-> 3. MathAgent: main function
->
-> > [!TIP]
-> >
-> > - You don't need to modified this folder(and if you want, go ahead). Since our current agents don't use them.
-> > - Fell free to use them as reference when you are creating new agents.
+#### Training and Evaluation
 
-#### *data*
+Run the main script to process questions and evaluate misconceptions:
+`bash
+    python main.py
+    `
 
-> This folder contains all the data we'll use in the final project
+#### Data
 
-#### *datamanager*
+Place your training, testing, and validation datasets in the `data/` directory.
 
-> Use DataManager in the template file to load the data.
+### Project Structure
 
-#### *EoT*
-
-> Original code of the paper EoT
->
-> As well as amaanxansari's EoT template.
-
-#### *milestone1*
-
-> The version we're using now.
->
-> 1. agent_test: code entrance
-> 2. MathAgent: Agents we use.
-> 3. rag_test: Test to retrieve data from the ***data***
-> 4. utils: Some helper functions
->
-> > [!TIP]
-> >
-> > - If you want to change the architecture. You should change both the **forward** part in the agent_test and add agents you need to use in the **MathAgent**
-> > - Currently, the data loading methods is quite different with the one mentioned in the datamanager
-
-#### *other*
-
-> Simple dspy demos that you could test yourself to get familiar with the usage of dspy and pydantic.
-
-#### *test*
-
-> We may put our test code here? I'm not quite sure what this folder do.
-
-# Dev Notes
-Please use pytest for writing unit tests!
-Please use pathlib.Path to define a path so it works on all operating systems.
+- `agents/`: Contains multi-agent logic for generating and evaluating misconceptions.
+- `data/`: Includes training, testing, and validation datasets.
+- `dataloader.py`: Preprocessing and data loading utilities.
+- `evaluation.py`: Performance evaluation and reporting tools.
+- `main.py`: Entry point for training and inference.
+- `predictmode.py`: Prediction logic for generating misconceptions.

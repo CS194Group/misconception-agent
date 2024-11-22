@@ -15,7 +15,7 @@ from dspy.teleprompt import BootstrapFewShot
 
 from Agents import Agent
 from Evaluation import evaluate_answers
-from PredictModel import ExchangeOfThought
+from src.predict_model import ExchangeOfThought
 from Dataloader import load_data, load_misconceptions
 
 # Initialize colorama
