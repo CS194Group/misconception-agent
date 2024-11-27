@@ -1,8 +1,8 @@
 # TODO: Create custom questions
-# TODO: Include real misconception
 # TODO: Compare read misconceptions with our misconceptions
 
 import streamlit as st
+from streamlit_extras.stylable_container import stylable_container
 import pandas as pd
 
 
@@ -87,8 +87,18 @@ class QuizApp:
 
         # Display question text
         st.subheader(f"Question")
-        container = st.container(border=True)
-        container.write(f"{question['question_text']}")
+        with stylable_container(
+            key="question_container",
+            css_styles="""
+                {
+                    border: 1px solid rgba(49, 51, 63, 0.2);
+                    border-radius: 0.5rem;
+                    padding: calc(1em - 1px);
+                    background-color: #fff;
+                }
+                """,
+        ):
+            st.write(f"{question['question_text']}")
 
         # Handle answer display and selection
         if st.session_state.answer_submitted:
@@ -125,16 +135,20 @@ class QuizApp:
                     pass
 
         # Misconception container
-        st.subheader("Misconception")
-        misconception_container = st.container()
-        misconception_container.markdown("""
-            <div style="background-color: white; 
-                        padding: 20px; 
-                        border-radius: 10px; 
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                This is a placeholder for the misconception.
-            </div>
-        """, unsafe_allow_html=True)
+        st.subheader(f"Misconception")
+        with stylable_container(
+            key="misconception_container",
+            css_styles="""
+                {
+                    border: 1px solid rgba(49, 51, 63, 0.2);
+                    border-radius: 0.5rem;
+                    padding: calc(1em - 1px);
+                    background-color: #fff;
+                }
+                """,
+        ):
+            # TODO: Include real misconception
+            st.write(f"This is a placeholder for the misconception.")
 
         # Navigation buttons
         if st.session_state.answer_submitted:
