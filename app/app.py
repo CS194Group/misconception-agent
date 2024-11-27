@@ -1,5 +1,7 @@
 # TODO: Create custom questions
-# TODO: Compare read misconceptions with our misconceptions
+# TODO: Deploy
+# TODO: Compare OpenAI with our model
+# TODO: Remove $$ from output
 
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
@@ -101,6 +103,7 @@ class QuizApp:
             st.write(f"{question['question_text']}")
 
         # Handle answer display and selection
+        st.subheader(f"Options")
         if st.session_state.answer_submitted:
             for key, value in question['options'].items():
                 if key == question['correct_answer']:
@@ -147,7 +150,6 @@ class QuizApp:
                 }
                 """,
         ):
-            # TODO: Include real misconception
             st.write(f"This is a placeholder for the misconception.")
 
         # Navigation buttons
