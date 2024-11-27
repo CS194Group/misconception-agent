@@ -1,0 +1,170 @@
+{
+  "agent_a.process": {
+    "lm": null,
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Generates misconception based on input question and correct answer",
+      "fields": [
+        {
+          "prefix": "Question:",
+          "description": "Question and answer of the question that you need to find the misconception from."
+        },
+        {
+          "prefix": "Context:",
+          "description": "Debate history of other agents for reference."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Qustion:",
+          "description": "Repeat the qestion."
+        },
+        {
+          "prefix": "Answer:",
+          "description": "\nOutput each option's misconceptions in the following format:\n(Assume that B is the correct answer)\n'A': 'MisconceptionA',\n'B': NaN,\n'C': 'MisconceptionC',\n'D': 'MisconceptionD'\nIf the option is correct, it's misconception should be NaN.\n"
+        }
+      ]
+    },
+    "extended_signature": {
+      "instructions": "Generates misconception based on input question and correct answer",
+      "fields": [
+        {
+          "prefix": "Question:",
+          "description": "Question and answer of the question that you need to find the misconception from."
+        },
+        {
+          "prefix": "Context:",
+          "description": "Debate history of other agents for reference."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Qustion:",
+          "description": "Repeat the qestion."
+        },
+        {
+          "prefix": "Answer:",
+          "description": "\nOutput each option's misconceptions in the following format:\n(Assume that B is the correct answer)\n'A': 'MisconceptionA',\n'B': NaN,\n'C': 'MisconceptionC',\n'D': 'MisconceptionD'\nIf the option is correct, it's misconception should be NaN.\n"
+        }
+      ]
+    }
+  },
+  "agent_b.process": {
+    "lm": null,
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Generates misconception based on input question and correct answer",
+      "fields": [
+        {
+          "prefix": "Question:",
+          "description": "Question and answer of the question that you need to find the misconception from."
+        },
+        {
+          "prefix": "Context:",
+          "description": "Debate history of other agents for reference."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Qustion:",
+          "description": "Repeat the qestion."
+        },
+        {
+          "prefix": "Answer:",
+          "description": "\nOutput each option's misconceptions in the following format:\n(Assume that B is the correct answer)\n'A': 'MisconceptionA',\n'B': NaN,\n'C': 'MisconceptionC',\n'D': 'MisconceptionD'\nIf the option is correct, it's misconception should be NaN.\n"
+        }
+      ]
+    },
+    "extended_signature": {
+      "instructions": "Generates misconception based on input question and correct answer",
+      "fields": [
+        {
+          "prefix": "Question:",
+          "description": "Question and answer of the question that you need to find the misconception from."
+        },
+        {
+          "prefix": "Context:",
+          "description": "Debate history of other agents for reference."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Qustion:",
+          "description": "Repeat the qestion."
+        },
+        {
+          "prefix": "Answer:",
+          "description": "\nOutput each option's misconceptions in the following format:\n(Assume that B is the correct answer)\n'A': 'MisconceptionA',\n'B': NaN,\n'C': 'MisconceptionC',\n'D': 'MisconceptionD'\nIf the option is correct, it's misconception should be NaN.\n"
+        }
+      ]
+    }
+  },
+  "agent_c.process": {
+    "lm": null,
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Generates misconception based on input question and correct answer",
+      "fields": [
+        {
+          "prefix": "Question:",
+          "description": "Question and answer of the question that you need to find the misconception from."
+        },
+        {
+          "prefix": "Context:",
+          "description": "Debate history of other agents for reference."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Qustion:",
+          "description": "Repeat the qestion."
+        },
+        {
+          "prefix": "Answer:",
+          "description": "\nOutput each option's misconceptions in the following format:\n(Assume that B is the correct answer)\n'A': 'MisconceptionA',\n'B': NaN,\n'C': 'MisconceptionC',\n'D': 'MisconceptionD'\nIf the option is correct, it's misconception should be NaN.\n"
+        }
+      ]
+    },
+    "extended_signature": {
+      "instructions": "Generates misconception based on input question and correct answer",
+      "fields": [
+        {
+          "prefix": "Question:",
+          "description": "Question and answer of the question that you need to find the misconception from."
+        },
+        {
+          "prefix": "Context:",
+          "description": "Debate history of other agents for reference."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Qustion:",
+          "description": "Repeat the qestion."
+        },
+        {
+          "prefix": "Answer:",
+          "description": "\nOutput each option's misconceptions in the following format:\n(Assume that B is the correct answer)\n'A': 'MisconceptionA',\n'B': NaN,\n'C': 'MisconceptionC',\n'D': 'MisconceptionD'\nIf the option is correct, it's misconception should be NaN.\n"
+        }
+      ]
+    }
+  }
+}

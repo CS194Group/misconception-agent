@@ -1,3 +1,7 @@
+# TODO: Create custom questions
+# TODO: Include real misconception
+# TODO: Compare read misconceptions with our misconceptions
+
 import streamlit as st
 import pandas as pd
 
