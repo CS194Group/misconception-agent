@@ -63,6 +63,17 @@ class DataManager:
         result = result[result['MisconceptionText'].notna()]
         return  result if not debug else result[:5]
 
+    @staticmethod
+    def get_examples(data_folder: pathlib.Path, debug=False):
+        # Convert DataFrame to list of Example objects
+        df = DataManager.get_data(data_folder, debug)
+        df.drop(columns=['QuestionId'], inplace=True)
+
+        # DSPY Example attributes:
+        # 'ConstructName', 'SubjectName', 'CorrectAnswer', 'QuestionText', 'Answer', 'AnswerText', 'MisconceptionText'
+        examples = [dspy.Example(**row) for _, row in df.iterrows()]
+        return examples
+
     # Reads data from disk and separates question, answers, and misconceptions
     # Output DataFrame columns are ID, question, answers, and misconceptions (text)
     @staticmethod
