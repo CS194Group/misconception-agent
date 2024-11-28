@@ -30,9 +30,15 @@ if not OPENAI_API_KEY:
     raise EnvironmentError(
         "OPENAI_API_KEY not found in environment variables.")
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-lm = dspy.LM('openai/gpt-3.5-turbo')
-dspy.configure(lm=lm)
+lm = dspy.LM('openai/gpt-4o-mini')
 
+# # https://github.com/stanfordnlp/dspy/issues/687
+# lm = None
+# if os.getenv("API_SERVICE") == 'lambda':
+#     from src.inference import LambdaLM
+#     lm = LambdaLM()
+
+dspy.configure(lm=lm)
 
 if __name__ == "__main__":
     # Misconception mapping

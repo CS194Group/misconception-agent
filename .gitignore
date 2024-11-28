@@ -16,3 +16,4 @@ logs/
 *.log
 node_modules/
 secret-config.json
+.idea
