@@ -6,17 +6,20 @@ TODO:
 '''
 
 import os
+import pathlib
+
 import dspy
 
 from dotenv import load_dotenv
 from dspy.evaluate import Evaluate
 from colorama import Fore, Style, init
 from dspy.teleprompt import BootstrapFewShot
+from sklearn.model_selection import train_test_split
 
 from src.agents import Agent
 from src.evaluation import evaluate_answers
 from src.predict_model import ExchangeOfThought
-from src.dataloader import load_data, load_misconceptions
+from src.dataloader import load_data, load_misconceptions, DataManager
 
 # Initialize colorama
 init(autoreset=True)
@@ -24,20 +27,25 @@ init(autoreset=True)
 # Load environment variables
 load_dotenv()
 
-# Configure OpenAI API
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise EnvironmentError(
-        "OPENAI_API_KEY not found in environment variables.")
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-lm = dspy.LM('openai/gpt-4o-mini')
+# CONSTANTS
+API = 'lambda'
+MAX_TOKEN = 250
+DEBUG = True
+SEED = 42
 
-# # https://github.com/stanfordnlp/dspy/issues/687
-# lm = None
-# if os.getenv("API_SERVICE") == 'lambda':
-#     from src.inference import LambdaLM
-#     lm = LambdaLM()
+lm = None
+if API == 'lambda':
+    lm = dspy.LM(f"openai/{os.getenv('API_MODEL')}", max_tokens=MAX_TOKEN, api_key=os.getenv("OPENAI_API_KEY"),
+            api_base=os.getenv("OPENAI_API_BASE"))
+elif API == 'openai':
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    if not OPENAI_API_KEY:
+        raise EnvironmentError(
+            "OPENAI_API_KEY not found in environment variables.")
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+    lm = dspy.LM('openai/gpt-4o-mini', max_tokens=MAX_TOKEN)
 
+assert lm is not None
 dspy.configure(lm=lm)
 
 if __name__ == "__main__":
@@ -45,8 +53,8 @@ if __name__ == "__main__":
     misconceptions = load_misconceptions('data/misconception_mapping.csv')
 
     # Load training and test sets
-    train_data = load_data('data/train.csv')
-    test_data = load_data('data/train.csv', is_test=True)
+    examples = DataManager.get_examples(pathlib.Path("data"), debug=DEBUG)
+    train_data, test_data = train_test_split(examples, test_size=0.2, random_state=SEED)
 
     # Set up Agents
     agent_a = Agent(name="Agent A")
