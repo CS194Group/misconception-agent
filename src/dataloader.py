@@ -38,24 +38,35 @@ def load_data(filepath, is_test=False):
 
     return examples
 
+
+import pathlib
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+
 class DataManager:
 
     # Retrieves misconceptions from disk and returns a DataFrame with columns misconception_id, misconception
     @staticmethod
-    def get_misconceptions(file_path: pathlib.Path) -> pd.DataFrame:
+    def _get_misconceptions(file_path: pathlib.Path) -> pd.DataFrame:
         misconceptions = pd.read_csv(file_path)
         # Ensuring columns match the actual file structure
         misconceptions.columns = ['misconception_id', 'misconception']
         return misconceptions
 
     @staticmethod
-    def get_data(data_folder: pathlib.Path):
-        return DataManager._get_partial_data(data_folder / 'train.csv', DataManager.get_misconceptions(data_folder / 'misconception_mapping.csv'))
+    def get_data(data_folder: pathlib.Path, debug=False) -> pd.DataFrame:
+        train_file = data_folder / 'train.csv'
+        misconception_mapping_file = data_folder / 'misconception_mapping.csv'
+        misconception_mapping = DataManager._get_misconceptions(misconception_mapping_file)
+        result = DataManager._join_data(train_file, misconception_mapping)
+        result = result[result['MisconceptionText'].notna()]
+        return  result if not debug else result[:5]
 
     # Reads data from disk and separates question, answers, and misconceptions
     # Output DataFrame columns are ID, question, answers, and misconceptions (text)
     @staticmethod
-    def _get_partial_data(file_path: pathlib.Path, misconception_mapping: pd.DataFrame) -> pd.DataFrame:
+    def _join_data(file_path: pathlib.Path, misconception_mapping: pd.DataFrame) -> pd.DataFrame:
         data = pd.read_csv(file_path)
 
         # Define columns that will be reshaped
@@ -66,21 +77,31 @@ class DataManager:
         # Reshape data to have each answer option as a separate row
         rows = []
         for i, row in data.iterrows():
+            # Map the CorrectAnswer letter to the corresponding answer text
+            correct_answer_letter = row['CorrectAnswer']
+            try:
+                correct_answer_text = row[f'Answer{correct_answer_letter}Text']
+            except KeyError:
+                raise ValueError(f"Correct answer letter '{correct_answer_letter}' not found in answer columns")
+                #correct_answer_text = None  # Handle unexpected answer letters
+
             for answer, answer_col, miscon_col in zip(answer_labels, answer_columns, misconception_columns):
                 # Get answer text and misconception ID
                 answer_text = row[answer_col]
                 misconception_id = row[miscon_col]
 
                 # Find misconception text if a misconception ID is present
-                misconception_text = misconception_mapping[misconception_mapping['misconception_id'] == misconception_id]['misconception'].values
+                misconception_text = misconception_mapping[
+                    misconception_mapping['misconception_id'] == misconception_id
+                ]['misconception'].values
                 misconception_text = misconception_text[0] if len(misconception_text) > 0 else None
 
-                # Append the reshaped row to the list
+                # Append the reshaped row to the list with CorrectAnswer as the actual text
                 rows.append({
                     'QuestionId': row['QuestionId'],
                     'ConstructName': row['ConstructName'],
                     'SubjectName': row['SubjectName'],
-                    'CorrectAnswer': row['CorrectAnswer'],
+                    'CorrectAnswer': correct_answer_text,  # Updated to actual answer text
                     'QuestionText': row['QuestionText'],
                     'Answer': answer,
                     'AnswerText': answer_text,
