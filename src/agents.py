@@ -1,10 +1,7 @@
-import faiss
 import dspy
-import pandas as pd
-from sentence_transformers import SentenceTransformer
 from dataclasses import dataclass
-from typing import List, Tuple
-import numpy as np
+from typing import Tuple
+
 
 # Agents' data return format
 
@@ -117,77 +114,5 @@ class SummeryAgent(dspy.Module):
         """Generates the agent's response based on question and optional context."""
         output = self.process(question=question, context=context)
         return output
-
-#########################################################################################################################
-
-#########################################################################################################################
-# Retrive model, using SentenceTransformer and SemanticSearchModule
-
-
-class MisconceptionDB:
-    def __init__(self, csv_path: str):
-        self.df = pd.read_csv(csv_path)
-        required_columns = ['MisconceptionId', 'MisconceptionName']
-        assert all(col in self.df.columns for col in required_columns)
-
-        self.semantic_search = SemanticSearchModule()
-        self.encoder = SentenceTransformer(
-            'paraphrase-multilingual-MiniLM-L12-v2')
-        self.init_faiss_index()
-
-    def init_faiss_index(self):
-        try:
-            texts = self.df['MisconceptionName'].tolist()
-            embeddings = self.encoder.encode(texts)
-
-            dimension = embeddings.shape[1]
-            self.index = faiss.IndexFlatL2(dimension)
-
-            self.index.add(np.array(embeddings).astype('float32'))
-
-            self.embeddings = embeddings
-
-        except Exception as e:
-            raise Exception(f"Error initializing FAISS index: {e}")
-
-    def vector_search(self, query: str, k: int = 15) -> List[Tuple[int, float]]:
-        query_vector = self.encoder.encode(query)
-
-        distances, indices = self.index.search(
-            np.array([query_vector]).astype('float32'),
-            k
-        )
-
-        return list(zip(indices[0], distances[0]))
-
-    def hybrid_search(self, query: str, top_k: int = 1, pre_filter_k: int = 5) -> List[Misconception]:
-        # First use FAISS to pick pre_filter_k misconception, and then use agent to rerank
-
-        vector_results = self.vector_search(query, pre_filter_k)
-
-        results = []
-        for idx, vector_distance in vector_results:
-            row = self.df.iloc[idx]
-
-            semantic_score, explanation = self.semantic_search(
-                query,
-                row['MisconceptionName']
-            )
-
-            vector_score = 1 / (1 + vector_distance)
-
-            misconception = Misconception(
-                misconception_id=float(row['MisconceptionId']),
-                misconception=row['MisconceptionName'],
-                similarity=0.7 * semantic_score + 0.3 * vector_score
-            )
-
-            results.append(misconception)
-
-        return sorted(
-            results,
-            key=lambda x: x.similarity,
-            reverse=True
-        )[:top_k]
 
 #########################################################################################################################

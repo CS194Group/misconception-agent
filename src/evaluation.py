@@ -1,4 +1,5 @@
-from src.agents import MisconceptionDB, SummeryAgent
+from src.agents import SummeryAgent
+from src.db import MisconceptionDB
 
 retrieve_model = MisconceptionDB("./data/misconception_mapping.csv")
 summery_agent = SummeryAgent(name='Summery Agent')
