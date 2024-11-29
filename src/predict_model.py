@@ -1,3 +1,4 @@
+import time
 from typing import Literal
 
 import dspy
@@ -33,6 +34,7 @@ class ExchangeOfThought(dspy.Module):
         assert self.mode == "Report"
 
     def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
+        #time.sleep(0.5)
         if self.mode == "Report":
             return self._report_mode(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
         elif self.mode == "Debate":
@@ -46,22 +48,21 @@ class ExchangeOfThought(dspy.Module):
 
     def _report_mode(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         # Step 1: A initiates thought
-        thought_a = self.agent_a.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
+        thought_a = self.agent_a(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
 
-        # Note this for-loop does not keep history of previous rounds
+        # Note this for-loop does not keep history of previous rounds, but it includes the chain of toughts if the agents
         for _ in range(self.rounds):
             # Step 2: A sends thought to B and C
-            agent_a_history = f"Agent A concludes: ({thought_a})"
-            thought_b = self.agent_b.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=agent_a_history)
-            thought_c = self.agent_c.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=agent_a_history)
+            agent_a_history = f"Agent A concludes: ({str(thought_a)})"
+            thought_b = self.agent_b(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=agent_a_history)
+            thought_c = self.agent_c(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=agent_a_history)
 
             # Step 3: A receives feedback from B and C, then combines thoughts
-            combined_thoughts = (f"Agent B concludes: ({thought_b}) /n"
-                                 f"Agent C concludes:  ({thought_c})")
-            thought_a = self.agent_a.forward(
+            combined_thoughts = (f"Agent B concludes: ({str(thought_b)}) /n"
+                                 f"Agent C concludes:  ({str(thought_c)})")
+            thought_a = self.agent_a(
                 QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=combined_thoughts)
 
-        #thought_a.question = QuestionText
         return thought_a
 
     def _debate_mode(self, question):

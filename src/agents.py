@@ -44,9 +44,9 @@ class Agent(dspy.Module):
     def __init__(self, name):
         super().__init__()
         self.name = name
-        self.process = dspy.ChainOfThought(BaseAgentSignature)
+        self.process = dspy.Predict(BaseAgentSignature)
 
-    def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None) -> dspy.Prediction:
+    def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None, text_only=True) -> dspy.Prediction:
         # Directly pass the inputs to the process method
         outputs = self.process(
             context=context,
@@ -56,7 +56,10 @@ class Agent(dspy.Module):
             SubjectName=SubjectName,
             CorrectAnswer=CorrectAnswer
         )
-        return outputs
+        if text_only:
+            return outputs.completions[0].MisconceptionText
+        else:
+            return outputs
 
 
 #########################################################################################################################
