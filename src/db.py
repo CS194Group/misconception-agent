@@ -14,7 +14,7 @@ from src.agents import SemanticSearchModule, Misconception
 
 #########################################################################################################################
 class MisconceptionDB:
-    def __init__(self, csv_path: pathlib.Path):
+    def __init__(self, csv_path: pathlib.Path, encoder_name: str = 'paraphrase-multilingual-MiniLM-L12-v2'):
         """
         Initializes the MisconceptionDB with data from a CSV file.
 
@@ -33,8 +33,7 @@ class MisconceptionDB:
         assert all(col in self.df.columns for col in required_columns)
 
         self.semantic_search = SemanticSearchModule()
-        self.encoder = SentenceTransformer(
-            'paraphrase-multilingual-MiniLM-L12-v2')
+        self.encoder = SentenceTransformer(encoder_name)
 
         self.index, self.embeddings = self.init_faiss_index()
 
@@ -62,9 +61,11 @@ class MisconceptionDB:
                 with pickle_file.open('wb') as f:
                     pickle.dump(embeddings, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+            embeddings = np.array(embeddings, dtype='float32')
             dimension = embeddings.shape[1]
             index = faiss.IndexFlatL2(dimension)
-            index.add(np.array(embeddings).astype('float32'))
+            faiss.normalize_L2(embeddings)
+            index.add(embeddings)
 
             return index, embeddings
 
@@ -86,13 +87,40 @@ class MisconceptionDB:
                                     Lower distances indicate higher similarity.
         """
         query_vector = self.encoder.encode(query)
+        query_vector = np.array([query_vector], dtype='float32')
+        faiss.normalize_L2(query_vector)
 
         distances, indices = self.index.search(
-            np.array([query_vector]).astype('float32'),
+            query_vector,
             k
         )
 
         return list(zip(indices[0], distances[0]))
+
+    def replace_ids_with_texts(self, search_results: List[Tuple[int, float]]) -> List[
+        Tuple[str, float]]:
+        """
+        Replaces the indices in the search results with the corresponding misconception texts.
+
+        Args:
+            search_results (List[Tuple[int, float]]): A list of tuples where each tuple contains:
+                                                      - An index of the misconception in the dataframe.
+                                                      - Its corresponding similarity score or distance.
+            misconception_db (MisconceptionDB): An instance of the MisconceptionDB containing the data.
+
+        Returns:
+            List[Tuple[str, float]]: A list of tuples where each tuple contains:
+                                     - The misconception text.
+                                     - Its corresponding similarity score or distance.
+        """
+
+        # Map the indices to texts
+        replaced_results = [
+            (self.df.iloc[idx]['MisconceptionName'], distance)
+            for idx, distance in search_results
+        ]
+
+        return replaced_results
 
     def hybrid_search(self, query: str, top_k: int = 1, pre_filter_k: int = 5) -> List[Misconception]:
         """
@@ -143,3 +171,38 @@ class MisconceptionDB:
             key=lambda x: x.similarity,
             reverse=True
         )[:top_k]
+
+    def calculate_l2_distance(self, query: str, true_class_id: int) -> float:
+        """
+        Calculates the L2 distance between a query embedding and the true misconception class embedding.
+
+        Args:
+            query (str): The input query string.
+            true_class_id (int): The MisconceptionId of the true misconception class.
+
+        Returns:
+            float: The L2 distance between the query embedding and the true misconception class embedding.
+
+        Raises:
+            ValueError: If the true_class_id is not found in the database.
+        """
+        if true_class_id not in self.df['MisconceptionId'].values:
+            raise ValueError(f"True class ID {true_class_id} not found in the database.")
+
+        # Get the embedding for the query
+        query_vector = self.encoder.encode(query)
+        query_vector = np.array([query_vector], dtype='float32')
+        faiss.normalize_L2(query_vector)
+
+        # Retrieve the embedding for the true misconception class
+        true_class_index = self.df.index[self.df['MisconceptionId'] == true_class_id][0]
+        true_class_embedding = self.embeddings[true_class_index].astype('float32')
+
+        # Reshape vectors to 2D arrays as required by Faiss
+        query_vector = query_vector.reshape(1, -1)
+        true_class_embedding = true_class_embedding.reshape(1, -1)
+
+        # Compute the squared L2 distance using Faiss
+        distances = faiss.pairwise_distances(query_vector, true_class_embedding, metric=faiss.METRIC_L2)
+        #l2_distance = np.sqrt(distances[0][0])  # Take the square root to get the L2 distance
+        return float(distances[0][0])
