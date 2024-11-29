@@ -51,7 +51,7 @@ class DataManager:
     def get_misconceptions(file_path: pathlib.Path) -> pd.DataFrame:
         misconceptions = pd.read_csv(file_path)
         # Ensuring columns match the actual file structure
-        misconceptions.columns = ['MisconceptionID', 'MisconceptionText']
+        misconceptions.columns = ['MisconceptionId', 'MisconceptionText']
         return misconceptions
 
     @staticmethod
@@ -62,7 +62,7 @@ class DataManager:
         result = DataManager._join_data(train_file, misconception_mapping)
         result = result[result['MisconceptionText'].notna()]
         # TODO: implement shuffeling
-        return  result if not debug else result[:25]
+        return  result if not debug else result[:10]
 
     @staticmethod
     def get_examples(data_folder: pathlib.Path, debug=False):
@@ -73,7 +73,31 @@ class DataManager:
         # DSPY Example attributes:
         # 'ConstructName', 'SubjectName', 'CorrectAnswer', 'QuestionText', 'AnswerText', 'MisconceptionText'
         examples = [dspy.Example(**row) for _, row in df.iterrows()]
+        examples = DataManager.set_example_inputs(examples) # set inputs
         return examples
+
+    @staticmethod
+    def set_example_inputs(examples):
+        """
+        Updates each Example in the dataset to specify the input fields.
+
+        Args:
+            examples (list of dspy.Example): The dataset containing Example objects.
+
+        Returns:
+            list of dspy.Example: The updated dataset with inputs set.
+        """
+        updated_dataset = []
+        for example in examples:
+            updated_example = example.with_inputs(
+                'QuestionText',
+                'AnswerText',
+                'ConstructName',
+                'SubjectName',
+                'CorrectAnswer'
+            )
+            updated_dataset.append(updated_example)
+        return updated_dataset
 
     # Reads data from disk and separates question, answers, and misconceptions
     # Output DataFrame columns are ID, question, answers, and misconceptions (text)
@@ -104,7 +128,7 @@ class DataManager:
 
                 # Find misconception text if a misconception ID is present
                 misconception_text = misconception_mapping[
-                    misconception_mapping['MisconceptionID'] == misconception_id
+                    misconception_mapping['MisconceptionId'] == misconception_id
                 ]['MisconceptionText'].values
                 misconception_text = misconception_text[0] if len(misconception_text) > 0 else None
 
@@ -118,7 +142,7 @@ class DataManager:
                     'Answer': answer,
                     'AnswerText': answer_text,
                     'MisconceptionText': misconception_text,
-                    'MisconceptionID': misconception_id
+                    'MisconceptionId': misconception_id
                 })
 
         # Convert list of rows into DataFrame
