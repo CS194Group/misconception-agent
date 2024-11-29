@@ -1,3 +1,5 @@
+from typing import Literal
+
 import dspy
 
 #########################################################################################################################
@@ -20,7 +22,7 @@ class SharedMemoryPool:
 
 
 class ExchangeOfThought(dspy.Module):
-    def __init__(self, agent_a, agent_b, agent_c, rounds=3, mode="Debate"):
+    def __init__(self, agent_a, agent_b, agent_c, rounds: int = 1, mode: Literal["Debate", "Report", "Memory", "Relay"] = "Report"):
         super().__init__()
         self.agent_a = agent_a
         self.agent_b = agent_b
@@ -28,35 +30,38 @@ class ExchangeOfThought(dspy.Module):
         self.memory_pool = SharedMemoryPool()
         self.rounds = rounds
         self.mode = mode
+        assert self.mode == "Report"
 
-    def forward(self, question):
+    def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         if self.mode == "Report":
-            return self._report_mode(question)
+            return self._report_mode(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
         elif self.mode == "Debate":
-            return self._debate_mode(question)
+            return self._debate_mode(QuestionText)
         elif self.mode == "Memory":
-            return self._memory_mode(question)
+            return self._memory_mode(QuestionText)
         elif self.mode == "Relay":
-            return self._relay_mode(question)
+            return self._relay_mode(QuestionText)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 
-    def _report_mode(self, question):
+    def _report_mode(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         # Step 1: A initiates thought
-        thought_a = self.agent_a.forward(question)
+        thought_a = self.agent_a.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
 
+        # Note this for-loop does not keep history of previous rounds
         for _ in range(self.rounds):
             # Step 2: A sends thought to B and C
-            thought_b = self.agent_b.forward(question, context=thought_a)
-            thought_c = self.agent_c.forward(question, context=thought_a)
+            agent_a_history = f"Agent A concludes: ({thought_a})"
+            thought_b = self.agent_b.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=agent_a_history)
+            thought_c = self.agent_c.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=agent_a_history)
 
             # Step 3: A receives feedback from B and C, then combines thoughts
-            combined_thoughts = f"Agent A concludes: ({thought_b}), ({thought_c})"
+            combined_thoughts = (f"Agent B concludes: ({thought_b}) /n"
+                                 f"Agent C concludes:  ({thought_c})")
             thought_a = self.agent_a.forward(
-                question, context=combined_thoughts)
+                QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=combined_thoughts)
 
-        thought_a.question = question
-
+        #thought_a.question = QuestionText
         return thought_a
 
     def _debate_mode(self, question):

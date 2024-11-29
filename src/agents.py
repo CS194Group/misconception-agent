@@ -27,26 +27,37 @@ If the option is correct, it's misconception should be NaN.
 '''
 
 
-class BaseRefereeAnswer(dspy.Signature):
-    """Generates misconception based on input question and correct answer"""
-    question = dspy.InputField(
-        desc='Question and answer of the question that you need to find the misconception from.')
+class BaseAgentSignature(dspy.Signature):
+    """Explain the misconception the student has based on his answer."""
     context = dspy.InputField(
-        desc='Debate history of other agents for reference.')
-    qustion = dspy.OutputField(desc='Repeat the qestion.')
-    answer = dspy.OutputField(desc=BaseAnswerPrompt)
+        desc='Debate history of other agents for reference. Empty if no history is available.')
 
+    QuestionText = dspy.InputField(desc='The question text.')
+    AnswerText = dspy.InputField(desc='The student wrong answer text.')
+    ConstructName = dspy.InputField()
+    SubjectName = dspy.InputField(desc="The subject of the question.")
+    CorrectAnswer = dspy.InputField(desc="The correct answer.")
+    MisconceptionText = dspy.OutputField(
+        desc='Explaination the misconception the student has based on his answer in maximum two sentences.')
 
 class Agent(dspy.Module):
     def __init__(self, name):
         super().__init__()
         self.name = name
-        self.process = dspy.ChainOfThought(BaseRefereeAnswer)
+        self.process = dspy.ChainOfThought(BaseAgentSignature)
 
-    def forward(self, question, context=None) -> dspy.Prediction:
-        """Generates the agent's response based on question and optional context."""
-        response = self.process(question=question, context=context)
-        return response
+    def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None) -> dspy.Prediction:
+        # Directly pass the inputs to the process method
+        outputs = self.process(
+            context=context,
+            QuestionText=QuestionText,
+            AnswerText=AnswerText,
+            ConstructName=ConstructName,
+            SubjectName=SubjectName,
+            CorrectAnswer=CorrectAnswer
+        )
+        return outputs
+
 
 #########################################################################################################################
 
