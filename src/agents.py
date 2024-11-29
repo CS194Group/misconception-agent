@@ -1,11 +1,9 @@
-import dspy
 from dataclasses import dataclass
 from typing import Tuple
+import dspy
 
 
 # Agents' data return format
-
-
 @dataclass
 class Misconception:
     misconception_id: float
@@ -15,53 +13,45 @@ class Misconception:
 ###########################################################################################################
 # The basic agent
 
-
-BaseAnswerPrompt = '''
-Output each option's misconceptions in the following format:
-(Assume that B is the correct answer)
-'A': 'MisconceptionA',
-'B': NaN,
-'C': 'MisconceptionC',
-'D': 'MisconceptionD'
-If the option is correct, it's misconception should be NaN.
-'''
-
-
 class BaseAgentSignature(dspy.Signature):
     """Explain the misconception the student has based on his answer."""
     context = dspy.InputField(
         desc='Debate history of other agents for reference. Empty if no history is available.')
-
     QuestionText = dspy.InputField(desc='The question text.')
     AnswerText = dspy.InputField(desc='The student wrong answer text.')
     ConstructName = dspy.InputField()
     SubjectName = dspy.InputField(desc="The subject of the question.")
     CorrectAnswer = dspy.InputField(desc="The correct answer.")
     MisconceptionText = dspy.OutputField(
-        desc='Explaination the misconception the student has based on his answer in maximum two sentences.')
+        desc='Explaination of the misconception the student has based on his answer in one percise sentences.')
 
 class Agent(dspy.Module):
-    def __init__(self, name):
+    def __init__(self, name, persona_promt=None):
         super().__init__()
         self.name = name
-        self.process = dspy.Predict(BaseAgentSignature)
-
-    def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None, text_only=True) -> dspy.Prediction:
-        # Directly pass the inputs to the process method
-        outputs = self.process(
-            context=context,
-            QuestionText=QuestionText,
-            AnswerText=AnswerText,
-            ConstructName=ConstructName,
-            SubjectName=SubjectName,
-            CorrectAnswer=CorrectAnswer
-        )
-        if text_only:
-            return outputs.completions[0].MisconceptionText
+        if persona_promt is not None:
+            self.persona_promt = f"Explain the misconception the student has based on his answer. {persona_promt}"
+            self.process = dspy.Predict(BaseAgentSignature.with_instructions(self.persona_promt))
         else:
-            return outputs
+            self.process = dspy.Predict(BaseAgentSignature)
 
+    def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None) -> str:
+        # Directly pass the inputs to the process method
+        try:
+            outputs = self.process(
+                context=context,
+                QuestionText=QuestionText,
+                AnswerText=AnswerText,
+                ConstructName=ConstructName,
+                SubjectName=SubjectName,
+                CorrectAnswer=CorrectAnswer,
+            )
 
+            return outputs.completions[0].MisconceptionText
+        except:
+            return "Failed to generate misconception explanation."
+
+# All code down below not used any more at the moment at least (it will be modified in the future)
 #########################################################################################################################
 
 #########################################################################################################################
