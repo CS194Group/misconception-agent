@@ -20,6 +20,7 @@ from src.dataloader import DataManager
 from src.evaluation import EvaluationManager
 from src.predict_model import ExchangeOfThought
 from src.util import LanguageModel
+from src.util import Persona
 
 # Initialize colorama
 init(autoreset=True)
@@ -42,25 +43,23 @@ if __name__ == "__main__":
     train_data, val_data = train_test_split(examples, test_size=0.8, random_state=SEED)
 
     # Set up Agents
-    agent_a = Agent(name="Agent A")
-    agent_b = Agent(name="Agent B")
-    agent_c = Agent(name="Agent C")
+    agent_a = Agent(name="Agent A" )#, persona_promt=Persona.AGENT_A_new)
+    agent_b = Agent(name="Agent B" )#, persona_promt=Persona.AGENT_B_new)
+    agent_c = Agent(name="Agent C" )#, persona_promt=Persona.AGENT_C_new)
 
     predict = ExchangeOfThought(
         agent_a, agent_b, agent_c, rounds=1, mode="Report")
     evaluation_metric = EvaluationManager.metric
 
     # compile
-
-    # teleprompter = BootstrapFewShot(metric=evaluation_metric, max_labeled_demos=2)
-    # compiled_predictor = teleprompter.compile(predict, trainset=train_data)
-    teleprompter = dspy.MIPROv2(metric=evaluation_metric, auto='light', num_threads=50)
+    teleprompter = BootstrapFewShot(metric=evaluation_metric, max_labeled_demos=3)
     compiled_predictor = teleprompter.compile(predict, trainset=train_data)
+    #teleprompter = dspy.MIPROv2(metric=evaluation_metric, auto='light', num_threads=6)
     compiled_predictor.save("models" / pathlib.Path('compiled_model.dspy'))
 
     # evaluate
     evaluate_program = Evaluate(devset=val_data, metric=evaluation_metric,
-                                num_threads=50, display_progress=True, display_table=10)
+                                num_threads=24, display_progress=True, display_table=10)
 
     eval_result = evaluate_program(predict)
     end = time.time()

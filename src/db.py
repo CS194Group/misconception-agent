@@ -122,7 +122,7 @@ class MisconceptionDB:
 
         return replaced_results
 
-    def hybrid_search(self, query: str, top_k: int = 1, pre_filter_k: int = 5) -> List[Misconception]:
+    def hybrid_search(self, query: str, top_k: int = 3, pre_filter_k: int = 25) -> List[Misconception]:
         """
         Performs a hybrid search combining vector-based and semantic-based ranking.
 
