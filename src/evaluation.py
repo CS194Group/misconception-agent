@@ -1,27 +1,55 @@
+import pathlib
+
+import dspy
+
 from src.agents import SummeryAgent
+from src.dataloader import DataManager
 from src.db import MisconceptionDB
 
-retrieve_model = MisconceptionDB("./data/misconception_mapping.csv")
-summery_agent = SummeryAgent(name='Summery Agent')
+class SimpleScorerAgentSignature(dspy.Signature):
+    """Predict the similarity score between the groundtruth and prediction. Focus on how similar the content is only. Give a high score if the content is the same. Give a low score if the content is different. Provide a score between 0 and 1.
+    """
+    groundtruth: str = dspy.InputField()
+    prediction: str = dspy.InputField()
+    score = dspy.OutputField()
 
 # Evaluating the answer
+class EvaluationManager:
+    def __init__(self):
+        self.misconception_db = MisconceptionDB(pathlib.Path("/data/misconception_mapping.csv"))
+        self.misconceptions_df = DataManager.get_misconceptions(pathlib.Path("/data/misconception_mapping.csv"))
+        self.summery_agent = SummeryAgent(name='Summery Agent')
 
+    @staticmethod
+    def metric(gold, pred, trace=None):
+        # Ensure prediction_score is a float
+        try:
+            prediction = dspy.ChainOfThought(SimpleScorerAgentSignature)(groundtruth=gold.MisconceptionText,
+                                                                         prediction=pred)
+            score = float(prediction.score.strip())
+        except:
+            score = 0.01
+        return max(0.0, min(1.0, score))
 
-def evaluate_answers(gold, pred, trace=None):
+    # def l2_distance(self, gold, pred, trace=None):
+    #     return evaluate_answers(gold, pred, trace)
 
-    try:
-        gold_answer_id = gold.answer
-        mis_out = summery_agent(pred.question, pred.answer)
+    # This function is probably not working anymore because it's
+    def evaluate_answers(self, gold, pred, trace=None):
 
-        final_index = []
-        for mis in [mis_out.misconceptionA, mis_out.misconceptionB, mis_out.misconceptionC, mis_out.misconceptionD]:
-            final_index.append(retrieve_model.hybrid_search(mis)[
-                               0].misconception_id)
+        try:
+            gold_answer_id = gold.answer
+            mis_out = self.summery_agent(pred.question, pred.answer)
 
-        for i, mis in enumerate(final_index):
-            if mis == gold_answer_id[i]:
-                return True
-        return False
+            final_index = []
+            for mis in [mis_out.misconceptionA, mis_out.misconceptionB, mis_out.misconceptionC, mis_out.misconceptionD]:
+                final_index.append(self.misconception_db.hybrid_search(mis)[
+                                   0].misconception_id)
 
-    except:
-        return False
+            for i, mis in enumerate(final_index):
+                if mis == gold_answer_id[i]:
+                    return True
+            return False
+
+        except:
+            return False
