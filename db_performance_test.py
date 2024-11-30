@@ -8,11 +8,11 @@ np.random.seed(42)
 import random
 random.seed(42)
 
-db = MisconceptionDB(pathlib.Path(__file__).parent.parent / Path("data/misconception_mapping.csv"), "paraphrase-mpnet-base-v2")
+db = MisconceptionDB(pathlib.Path('data') / Path("misconception_mapping.csv"), "paraphrase-mpnet-base-v2")
 
 class_id = 20
-simulated_model_query = "Thinks the whole number portion of a mixed number is multiplied by its fractional part."
-result0 = db.calculate_l2_distance("Believes the number of wholes in a mixed number multiplies by the fraction part", class_id)
+simulated_model_query = "Thinks the whole number portion of a mixed number is multiplied by its fractional part." # pharphrased misconception
+result0 = db.calculate_l2_distance("Believes the number of wholes in a mixed number multiplies by the fraction part", class_id) # true misconception
 result1 = db.calculate_l2_distance(simulated_model_query, class_id)
 result2 = db.calculate_l2_distance("Student thinks that any two angles along a straight line are equal", class_id) # other misconception
 result3 = db.vector_search(simulated_model_query, 25)

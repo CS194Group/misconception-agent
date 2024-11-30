@@ -51,3 +51,12 @@ Place your training, testing, and validation datasets in the `data/` directory.
 - `evaluation.py`: Performance evaluation and reporting tools.
 - `main.py`: Entry point for training and inference.
 - `predictmode.py`: Prediction logic for generating misconceptions.
+
+### Structure of .env File 
+    
+```bash
+LAMBDA_API_KEY=""
+LAMBDA_API_BASE="https://api.lambdalabs.com/v1/"
+LAMBDA_API_MODEL="llama3.1-70b-instruct-berkeley"
+OPENAI_API_KEY=""
+```
