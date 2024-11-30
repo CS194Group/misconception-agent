@@ -34,7 +34,6 @@ class MisconceptionDB:
 
         self.semantic_search = SemanticSearchModule()
         self.encoder = SentenceTransformer(encoder_name)
-
         self.index, self.embeddings = self.init_faiss_index()
 
     def init_faiss_index(self) -> Tuple[faiss.Index, np.ndarray]:
@@ -49,7 +48,6 @@ class MisconceptionDB:
         """
         try:
             misconception_texts = self.df['MisconceptionName'].tolist()
-            misconception_texts.sort()
 
             # caching embeddings to disk
             pickle_file = pathlib.Path.cwd() / pathlib.Path('data/db.pkl')
