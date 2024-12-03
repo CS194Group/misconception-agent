@@ -31,6 +31,13 @@ class EvaluationManager:
             score = 0.01
         return max(0.0, min(1.0, score))
 
+    #def metric(gold, pred, trace=None):
+    # db.vector_search(pred, k=1) --> List [Tuple[int class_id, float distance]]
+    # sort by distance, lowestance first
+    # MAP_25 gold_class_id and np.array[25 prediction class_id] -- score: float
+    # MAP_25(List [Tuple[int class_id, float distance]], gold) --> gold.class_id
+
+
     # def l2_distance(self, gold, pred, trace=None):
     #     return evaluate_answers(gold, pred, trace)
 
