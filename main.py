@@ -19,7 +19,7 @@ from src.agents import Agent
 from src.dataloader import DataManager
 from src.evaluation import EvaluationManager
 from src.predict_model import ExchangeOfThought
-from src.util import LanguageModel
+from src.util import LanguageModel, PrefixedChatAdapter
 from src.util import Persona
 
 # Initialize colorama
@@ -32,7 +32,8 @@ API: Literal['lambda', 'openai'] = 'lambda'
 MAX_TOKEN: int = 100
 
 lm_wrapper = LanguageModel(max_tokens=MAX_TOKEN, service=API)
-dspy.configure(lm=lm_wrapper.lm)
+custom_adapter = PrefixedChatAdapter()
+dspy.configure(lm=lm_wrapper.lm, adapter=custom_adapter)
 
 if __name__ == "__main__":
     # Load training and test sets
@@ -43,18 +44,23 @@ if __name__ == "__main__":
     train_data, val_data = train_test_split(examples, test_size=0.8, random_state=SEED)
 
     # Set up Agents
-    agent_a = Agent(name="Agent A" )#, persona_promt=Persona.AGENT_A_new)
-    agent_b = Agent(name="Agent B" )#, persona_promt=Persona.AGENT_B_new)
-    agent_c = Agent(name="Agent C" )#, persona_promt=Persona.AGENT_C_new)
+
+    # agent_a = Agent(name="Agent A" )#, persona_promt=Persona.AGENT_A_new)
+    # agent_b = Agent(name="Agent B" )#, persona_promt=Persona.AGENT_B_new)
+    # agent_c = Agent(name="Agent C" )#, persona_promt=Persona.AGENT_C_new)
+
+    agent_a = Agent(name="Agent A" , persona_promt=Persona.AGENT_A_new)
+    agent_b = Agent(name="Agent B" , persona_promt=Persona.AGENT_B_new)
+    agent_c = Agent(name="Agent C" , persona_promt=Persona.AGENT_C_new)
 
     predict = ExchangeOfThought(
         agent_a, agent_b, agent_c, rounds=1, mode="Report")
-    evaluation_metric = EvaluationManager.metric
+    # predict = Agent(name="Single Agent" )
+    evaluation_metric = EvaluationManager().metric_vector_search
 
     # compile
     teleprompter = BootstrapFewShot(metric=evaluation_metric, max_labeled_demos=3)
     compiled_predictor = teleprompter.compile(predict, trainset=train_data)
-    #teleprompter = dspy.MIPROv2(metric=evaluation_metric, auto='light', num_threads=6)
     compiled_predictor.save("models" / pathlib.Path('compiled_model.dspy'))
 
     # evaluate
