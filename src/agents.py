@@ -29,11 +29,8 @@ class Agent(dspy.Module):
     def __init__(self, name, persona_promt=None):
         super().__init__()
         self.name = name
-        if persona_promt is not None:
-            self.persona_promt = f"Explain the misconception the student has based on his answer. {persona_promt}"
-            self.process = dspy.Predict(BaseAgentSignature.with_instructions(self.persona_promt))
-        else:
-            self.process = dspy.Predict(BaseAgentSignature)
+        self.prefix_promt = persona_promt
+        self.process = dspy.Predict(BaseAgentSignature)
 
     def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None) -> str:
         # Directly pass the inputs to the process method
@@ -45,6 +42,7 @@ class Agent(dspy.Module):
                 ConstructName=ConstructName,
                 SubjectName=SubjectName,
                 CorrectAnswer=CorrectAnswer,
+                prefix = self.prefix_promt
             )
 
             return outputs.completions[0].MisconceptionText

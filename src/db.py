@@ -93,7 +93,11 @@ class MisconceptionDB:
             k
         )
 
-        return list(zip(indices[0], distances[0]))
+        return sorted(
+            list(zip(indices[0], distances[0])),
+            key=lambda x: x[1]
+        )
+
 
     def replace_ids_with_texts(self, search_results: List[Tuple[int, float]]) -> List[
         Tuple[str, float]]:

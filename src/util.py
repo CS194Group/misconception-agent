@@ -1,8 +1,10 @@
 import os
 from typing import Literal
+#from typing import override
 
 import dspy
 from dotenv import load_dotenv
+
 
 class LanguageModel:
     def __init__(self, max_tokens: int = 100, service: Literal['lambda', 'openai'] = 'lambda'):
@@ -44,3 +46,52 @@ class Persona:
     AGENT_A_new = "You are a diligent, reliable, and knowledgeable."
     AGENT_B_new = "You are a attentive and detail-oriented."
     AGENT_C_new = "You have unique problem-solving abilities and can think out of the box."
+
+
+# chat_adapter_wrapper.py
+from typing import Any, Dict
+
+
+class PrefixedChatAdapter(dspy.adapters.chat_adapter.ChatAdapter):
+    # def __init__(self, callbacks=None):
+    #     super().__init__(callbacks=callbacks)
+    #     self.prefix = prefix
+
+    #@override
+    def format(self, signature: dspy.signatures.signature.Signature, demos: list[dict[str, Any]], inputs: dict[str, Any]) -> list[dict[str, Any]]:
+        # Get the prepared instructions from the original ChatAdapter.
+        print("Custom PrefixedChatAdapter format method called")
+        prepared_instructions = dspy.adapters.chat_adapter.prepare_instructions(signature)
+
+        # Add the desired prefix.
+        prefix = inputs.pop("prefix", None)
+
+        if prefix is not None:
+            instructions = f"{prefix}\n{prepared_instructions}"
+        else:
+            instructions = prepared_instructions
+
+        # Add the prefixed instructions to the messages.
+        # noinspection PyListCreation
+        messages: list[dict[str, Any]] = []
+        messages.append({"role": "system", "content": instructions})
+
+        # Proceed with the rest of the logic as per the original `format` method.
+        incomplete_demos = [
+            demo for demo in demos if not all(k in demo and demo[k] is not None for k in signature.fields)
+        ]
+        complete_demos = [demo for demo in demos if demo not in incomplete_demos]
+
+        demos = incomplete_demos + complete_demos
+
+        for demo in demos:
+            messages.append(self.format_turn(signature, demo, role="user", incomplete=demo in incomplete_demos))
+            messages.append(self.format_turn(signature, demo, role="assistant", incomplete=demo in incomplete_demos))
+
+        messages.append(self.format_turn(signature, inputs, role="user"))
+        return messages
+
+# Example usage:
+# Assuming you have an instance of signature, demos, and inputs
+# adapter = PrefixedChatAdapter(prefix="Custom Prefix: ")
+# messages = adapter.format(signature, demos, inputs)
