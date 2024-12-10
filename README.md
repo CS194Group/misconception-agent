@@ -25,7 +25,7 @@ A multi-agent system designed to enhance learning environments by predicting stu
    cd multi-agent-misconceptions
    ```
 
-2. Install required dependencies:
+   Install required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -35,9 +35,10 @@ A multi-agent system designed to enhance learning environments by predicting stu
 #### Training and Evaluation
 
 Run the main script to process questions and evaluate misconceptions:
-`bash
-    python main.py
-    `
+
+```bash
+python main.py
+```
 
 #### Data
 
@@ -51,9 +52,10 @@ Place your training, testing, and validation datasets in the `data/` directory.
 - `evaluation.py`: Performance evaluation and reporting tools.
 - `main.py`: Entry point for training and inference.
 - `predictmode.py`: Prediction logic for generating misconceptions.
+- `app`: The web page of agents. 
 
 ### Structure of .env File 
-    
+
 ```bash
 LAMBDA_API_KEY=""
 LAMBDA_API_BASE="https://api.lambdalabs.com/v1/"

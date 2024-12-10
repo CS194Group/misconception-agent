@@ -337,7 +337,7 @@ class QuizApp:
 
             if st.session_state.selected_option == question['correct_answer']:
                 if not st.session_state.balloon_shown:
-                    st.balloons()
+                    # st.balloons()
                     st.session_state.balloon_shown = True
 
             for key, value in question['options'].items():

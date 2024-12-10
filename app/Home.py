@@ -1,67 +1,3 @@
-# import streamlit as st
-
-# def main():
-#     st.title("Misconcept Detect Agent")
-#     st.write("Well come to the home page！")
-#     st.write("Use the left navigation bar to switch between different pages")
-
-#     misconception_dict = {
-#         "A": "Misconception: If all the plants were cut in half, the range wouldn't change.",
-#         "B": "Misconception: If all the plants grew by $ 3 \\mathrm{\\sim cm} $ each, the range wouldn't change.",
-#         "C": "Misconception: Both Tom and Katie are incorrect. The range would change in both scenarios.",
-#         "D": "Misconception: Believes if you add the same value to all numbers in the dataset the range will change."
-#     }
-
-#     selected_misconception = st.radio("Select a misconception:", list(misconception_dict.keys()))
-
-#     st.write(misconception_dict[selected_misconception])
-
-# if __name__ == "__main__":
-#     main()
-
-# import streamlit as st
-
-# def main():
-#     # Set page configuration
-#     st.set_page_config(
-#         page_title="Misconception Detect Agent",
-#         page_icon="🔍",
-#         layout="wide"
-#     )
-
-#     # Custom CSS for styling
-#     st.markdown("""
-#     <style>
-#     .main {
-#         background-color: #f0f2f6;
-#         padding: 2rem;
-#     }
-#     .stRadio > div {
-#         background-color: white;
-#         padding: 20px;
-#         border-radius: 10px;
-#         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-#     }
-#     .stMarkdown {
-#         font-family: 'Arial', sans-serif;
-#     }
-#     h1 {
-#         color: #2c3e50;
-#         text-align: center;
-#         margin-bottom: 30px;
-#     }
-#     </style>
-#     """, unsafe_allow_html=True)
-
-#     # Title with custom styling
-#     st.markdown("<h1>🧠 Misconception Detect Agent</h1>", unsafe_allow_html=True)
-
-
-
-
-# if __name__ == "__main__":
-#     main()
-
 import streamlit as st
 
 def main():
@@ -154,21 +90,8 @@ def main():
 
     st.info("🕵️ Explore and Identify Mathematical Misconceptions! Select a scenario to uncover hidden reasoning errors.")
 
-    st.balloons()
-    # st.snow()
     st.success("Navigate through different misconceptions using the radio buttons below.")
 
-    # with col1:
-    #     analysis_type = st.selectbox(
-    #         "Select Analysis Type", 
-    #         ["Range Impact", "Measurement Interpretation", "Data Transformation"]
-    #     )
-
-    # with col2:
-    #     difficulty = st.select_slider(
-    #         "Difficulty Level", 
-    #         options=["Beginner", "Intermediate", "Advanced"]
-    #     )
     if st.checkbox("Show Detailed Instructions", value=True):
         st.markdown("""
         ### 🎯 How to Use the Misconception Detector

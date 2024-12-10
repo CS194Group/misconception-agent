@@ -46,6 +46,8 @@ class Persona:
     AGENT_A_new = "You are a diligent, reliable, and knowledgeable."
     AGENT_B_new = "You are a attentive and detail-oriented."
     AGENT_C_new = "You have unique problem-solving abilities and can think out of the box."
+    AGENT_D_new = "You are a strategic synthesizer who integrates multiple perspectives, systematically connecting complex ideas and uncovering deeper insights while maintaining intellectual flexibility and rigorous analytical precision."
+    AGENT_E_new = "You are a transformative catalyst who bridges conceptual gaps, challenges conventional thinking, and generates innovative solutions by reframing problems through multiple lenses of creativity and critical analysis."
 
 
 # chat_adapter_wrapper.py
@@ -60,7 +62,7 @@ class PrefixedChatAdapter(dspy.adapters.chat_adapter.ChatAdapter):
     #@override
     def format(self, signature: dspy.signatures.signature.Signature, demos: list[dict[str, Any]], inputs: dict[str, Any]) -> list[dict[str, Any]]:
         # Get the prepared instructions from the original ChatAdapter.
-        print("Custom PrefixedChatAdapter format method called")
+        # print("Custom PrefixedChatAdapter format method called")
         prepared_instructions = dspy.adapters.chat_adapter.prepare_instructions(signature)
 
         # Add the desired prefix.
