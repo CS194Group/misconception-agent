@@ -6,7 +6,12 @@ import dspy
 from openai import OpenAI
 import os
 import json
+import time 
+import httpx
 import pdb
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # logging.basicConfig(
 #     level=logging.DEBUG,
@@ -160,9 +165,63 @@ class SolveAgent(dspy.Module):
 
             return outputs.completions[0].Solution
         except Exception as e:
-            print(e)
+            # print(e)
             return "Failed to generate anwser explanation of the problem."
         
+MisagentPrompt = r"""
+Based on the provided correct answer, its reasoning process, and the incorrect answer obtained, identify the step where the error occurred, and determine the reason for the mistake.
+"""
+
+# MisagentPrompt = r"""
+# Based on the provided correct answer, its reasoning process, and the incorrect answer obtained, identify the step where the error occurred, and determine the reason for the mistake.
+# You should carefully examine each step for potential errors and identify the step most likely to have mistakes. You need to consider, but are not limited to, the following situations:  
+
+# 1. Calculation Errors:  
+#    For example, when calculating \( 8 \times 7 - 3 \), it is mistakenly written as  
+#    \[
+#    8 \times 7 - 3 = 56 - 3 = 53,
+#    \]  
+#    while the correct answer is actually  
+#    \[
+#    8 \times 7 - 3 = 56 - 3 = 53.
+#    \]  
+#    This example highlights the importance of operation order and calculation details.  
+
+# 2. Conceptual Understanding Errors:  
+#    Failing to distinguish that converting percentages to fractions requires dividing by 100, not 10.  
+#    For instance, \( 75\% \) is incorrectly converted to \( 75/10 \), while the correct conversion should be  
+#    \[
+#    75\% = \frac{75}{100} = \frac{3}{4}.
+#    \]  
+
+# 3. Logical Reasoning Errors:  
+#    Mistakenly reasoning in reverse when proving "if \( A \) is true, then \( B \) must also be true," as "if \( B \) is true, then \( A \) must also be true."  
+#    For example, in the statement "if it is a mammal, then it is warm-blooded," it cannot be deduced that "all warm-blooded animals are mammals," because birds are also warm-blooded animals.  
+
+# 4. Errors in Visualization and Spatial Imagination:  
+#    When calculating the surface area of a cube, mistakenly adding up all areas without accounting for overlapping faces.  
+#    For example, for a cube with an edge length of 2, the surface area is incorrectly calculated as  
+#    \[
+#    2 \times 6 = 12,
+#    \]  
+#    while the correct answer is  
+#    \[
+#    2^2 \times 6 = 24.
+#    \]  
+
+# 5. Algebraic Expression Errors:  
+#    When solving a system of equations, for example, \( x + y = 10 \) and \( x - y = 2 \), mistakenly adding the two equations to get  
+#    \[
+#    2x = 12,
+#    \]  
+#    and directly concluding \( x = 6 \). This method ignores that the solution must satisfy both equations simultaneously.  
+
+# Your output format should be:  
+# \[
+# \text{[reasoning step index]: Explanation of the potential error.}
+# \]
+# """
+
 # This agent is use to find the most possible wrong process of the question and get the misconception
 class MisAgentSignature(dspy.Signature):
     """Explain the misconception the student has based on correct answer reasoning and his answer."""
@@ -174,9 +233,7 @@ class MisAgentSignature(dspy.Signature):
     SubjectName = dspy.InputField(desc="The subject of the question.")
     CorrectAnswer = dspy.InputField(desc="The correct answer.")
     CorrectReasoning = dspy.InputField(desc="The correct answer' reasoning process.")
-
-    MisconceptionText = dspy.OutputField(
-        desc='Based on the provided correct answer, its reasoning process, and the incorrect answer obtained, identify the step where the error occurred, and determine the reason for the mistake.')
+    MisconceptionText = dspy.OutputField(desc=MisagentPrompt )
     
 class MisAgent(dspy.Module):
     def __init__(self, name, persona_promt=None):
@@ -244,62 +301,62 @@ class FinAgent(dspy.Module):
             return outputs.completions[0].MisconceptionText
         
         except Exception as e:
+            # print(e)
             return "Failed to generate misconception explanation."
         
 class SolveAgent_api(dspy.Module):
 
-    def __init__(self, name, persona_promt=None):
+    def __init__(self, name, persona_promt=None, request_interval=1):
         super().__init__()
         self.name = name
         self.prefix_promt = persona_promt
+        self.request_interval = request_interval
 
         self.solve_agent = dspy.Predict(SolveAgentSignature)
         self.summery_agent = dspy.Predict(SummaryAgentSignature)
 
     def get_reasoning(self, query, answer):
-        prompt = f"Please generate proper reasoning process of the question.\nQuestion:\n{query}\nCorrect Answer:{answer}"
-        client = OpenAI(
-            api_key=os.getenv("DASHSCOPE_API_KEY"), # 如果您没有配置环境变量，请在此处用您的API Key进行替换
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",  # 填写DashScope服务的base_url
-        )
-        completion = client.chat.completions.create(
-            model="qwen2-math-72b-instruct",
-            messages=[
-                {'role': 'system', 'content': 'You are a helpful assistant that giit.'},
-                {'role': 'user', 'content': prompt}]
+
+        try:
+            # pdb.set_trace()
+            prompt = f"Please generate proper reasoning process of the question.\nQuestion:\n{query}\nCorrect Answer:{answer}. Your answer should be well-formatted, using 1. 2. 3. to list items sequentially."
+
+            http_client = httpx.Client(verify=False)
+
+            time.sleep(self.request_interval)
+            client = OpenAI(
+                api_key=os.getenv("DASHSCOPE_API_KEY"),
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+                http_client=http_client
             )
-        # print(completion.model_dump_json())
-        return json.loads(completion.model_dump_json())["choices"][0]["message"]["content"]
+            completion = client.chat.completions.create(
+                model="qwen2-math-72b-instruct",
+                # model="qwen-math-plus",
+                messages=[
+                    {'role': 'system', 'content': 'You are a helpful assistant that giit.'},
+                    {'role': 'user', 'content': prompt}]
+                )
+            # print(completion.model_dump_json())
+            return completion.choices[0].message.content
+        
+        except Exception as e:
+            print(e)
+            # pdb.set_trace()
 
     def forward(self, QuestionText, ConstructName, SubjectName, CorrectAnswer, context=None) -> str:
         # Directly pass the inputs to the process method
-        try:
-            while(True):
-                
-                # pdb.set_trace()
-                thoughts = self.get_reasoning(QuestionText, CorrectAnswer)
-                pdb.set_trace()
+        # try:
+        while(True):
+            
+            thoughts = self.get_reasoning(QuestionText, CorrectAnswer)
 
-                if context:
-                    context += f"\Reasoning result: {thoughts} \n"
-                else:
-                    context = f"\Reasoning result: {thoughts} \n"
+            if context:
+                context += f"\Reasoning result: {thoughts} \n"
+            else:
+                context = f"\Reasoning result: {thoughts} \n"
 
-                # Judge whether the infomation is enough
-                judge_pass = self.solve_agent(
-                    context=context,
-                    QuestionText=QuestionText,
-                    ConstructName=ConstructName,
-                    SubjectName=SubjectName,
-                    CorrectAnswer=CorrectAnswer,
-                    prefix = self.prefix_promt
-                )
-
-                judge_pass = judge_pass.completions[0].Judge.lower()
-                if 'yes' in judge_pass:
-                    break
-
-            outputs = self.summery_agent(
+            # Judge whether the infomation is enough
+            judge_pass = self.solve_agent(
                 context=context,
                 QuestionText=QuestionText,
                 ConstructName=ConstructName,
@@ -308,7 +365,19 @@ class SolveAgent_api(dspy.Module):
                 prefix = self.prefix_promt
             )
 
-            return outputs.completions[0].Solution
-        except Exception as e:
-            print(e)
-            return "Failed to generate anwser explanation of the problem."
+            judge_pass = judge_pass.completions[0].Judge.lower()
+            if 'yes' in judge_pass:
+                break
+
+        outputs = self.summery_agent(
+            context=context,
+            QuestionText=QuestionText,
+            ConstructName=ConstructName,
+            SubjectName=SubjectName,
+            CorrectAnswer=CorrectAnswer,
+            prefix = self.prefix_promt
+        )
+
+        return outputs.completions[0].Solution
+        # except Exception as e:
+        #     return "Failed to generate anwser explanation of the problem."

@@ -56,7 +56,7 @@ Place your training, testing, and validation datasets in the `data/` directory.
 
 ### Structure of .env File 
 
-```bash
+```·bash
 LAMBDA_API_KEY=""
 LAMBDA_API_BASE="https://api.lambdalabs.com/v1/"
 LAMBDA_API_MODEL="llama3.1-70b-instruct-berkeley"

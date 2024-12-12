@@ -10,6 +10,17 @@ from src.util import LanguageModel
 from typing import Literal
 import os
 
+import logging
+
+# logging.basicConfig(
+#     level=logging.INFO, 
+#     format='%(asctime)s - %(levelname)s - %(message)s', 
+#     handlers=[
+#         logging.FileHandler("evaluation_manager.log"), 
+#         logging.StreamHandler()
+#     ]
+# )
+
 class SimpleScorerAgentSignature(dspy.Signature):
     """Predict the similarity score between the groundtruth and prediction. Focus on how similar the content is only. Give a high score if the content is the same. Give a low score if the content is different. Provide a score between 0 and 1.
     """
@@ -116,6 +127,8 @@ class EvaluationManager:
         Returns:
             float: The MAP@25 score for the prediction.
         """
+        logging.warning(f"Gold: {gold.MisconceptionId}")
+        logging.warning(f"Pred: {pred}")
         if pred == "Failed to generate misconception explanation.":
             return 0.0
         # Extract the ground truth misconception ID from the gold example
@@ -124,10 +137,14 @@ class EvaluationManager:
         # Perform vector search to retrieve top 25 similar misconceptions
         search_results = self.misconception_db.vector_search(pred, k=25)
 
+        logging.info(f"Search_results: {search_results}")
+
         # Map the search result indices to MisconceptionIds
         predicted_class_ids = [
             self.misconception_db.df.iloc[idx]['MisconceptionId'] for idx, _ in search_results
         ]
+
+        logging.info(f"Search_results: {predicted_class_ids}")
 
         # Prepare numpy arrays for calculate_map_at_25
         predictions = np.array([predicted_class_ids])

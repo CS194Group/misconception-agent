@@ -1,9 +1,19 @@
 from dataclasses import dataclass
 from typing import Tuple
 import dspy
+import logging
 import pdb
 
-from src.agents_component import SolveAgent, MisAgent, FinAgent, SolveAgent_api
+from src.agents_component import MisAgent, FinAgent, SolveAgent_api
+
+logging.basicConfig(
+    level=logging.WARNING, 
+    format='%(asctime)s - %(levelname)s - %(message)s', 
+    handlers=[
+        logging.FileHandler("agents.log"), 
+        logging.StreamHandler()
+    ]
+)
 
 # Agents' data return format
 @dataclass
@@ -68,43 +78,46 @@ class AdvancedAgent(dspy.Module):
 
     def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None) -> str:
         # Directly pass the inputs to the process method
-        try:
-            answer_reasoning = self.solve_agent(
-                context=context,
-                QuestionText=QuestionText,
-                ConstructName=ConstructName,
-                SubjectName=SubjectName,
-                CorrectAnswer=CorrectAnswer,
-            )
+        # try:
 
-            pdb.set_trace()
+        answer_reasoning = self.solve_agent(
+            context=context,
+            QuestionText=QuestionText,
+            ConstructName=ConstructName,
+            SubjectName=SubjectName,
+            CorrectAnswer=CorrectAnswer,
+        )
 
-            misconception_choice = self.mis_agent(
-                context=context,
-                QuestionText=QuestionText,
-                AnswerText=AnswerText,
-                ConstructName=ConstructName,
-                SubjectName=SubjectName,
-                CorrectAnswer=CorrectAnswer,
-                CorrectReasoning=answer_reasoning,
-            )
+        logging.warning(f"answer_reasoning: {answer_reasoning}")
 
-            misconception = self.fin_agent(
-                context=context,
-                QuestionText=QuestionText,
-                AnswerText=AnswerText,
-                ConstructName=ConstructName,
-                SubjectName=SubjectName,
-                CorrectAnswer=CorrectAnswer,
-                CorrectReasoning=answer_reasoning,
-                MisconceptionReasoning=misconception_choice,
-            )
+        misconception_choice = self.mis_agent(
+            context=context,
+            QuestionText=QuestionText,
+            AnswerText=AnswerText,
+            ConstructName=ConstructName,
+            SubjectName=SubjectName,
+            CorrectAnswer=CorrectAnswer,
+            CorrectReasoning=answer_reasoning,
+        )
 
-            return misconception
-        
-        except Exception as e:
-            print(e)
-            return "Failed to generate misconception explanation."
+        logging.warning(f"misconception_choice: {misconception_choice}")
+
+        misconception = self.fin_agent(
+            context=context,
+            QuestionText=QuestionText,
+            AnswerText=AnswerText,
+            ConstructName=ConstructName,
+            SubjectName=SubjectName,
+            CorrectAnswer=CorrectAnswer,
+            CorrectReasoning=answer_reasoning,
+            MisconceptionReasoning=misconception_choice,
+        )
+
+        return misconception
+    
+        # except Exception as e:
+        #     print(e)
+        #     return "Failed to generate misconception explanation."
         
 
 # All code down below not used any more at the moment at least (it will be modified in the future)

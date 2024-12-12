@@ -5,7 +5,6 @@ from typing import Literal
 import dspy
 from dotenv import load_dotenv
 
-
 class LanguageModel:
     def __init__(self, max_tokens: int = 100, service: Literal['lambda', 'openai'] = 'lambda'):
         load_dotenv()
