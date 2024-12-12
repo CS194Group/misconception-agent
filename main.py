@@ -35,6 +35,10 @@ lm_wrapper = LanguageModel(max_tokens=MAX_TOKEN, service=API)
 custom_adapter = PrefixedChatAdapter()
 dspy.configure(lm=lm_wrapper.lm, adapter=custom_adapter)
 
+# TODO: check if /models exists and if not create
+pathlib.Path("models").mkdir(parents=True, exist_ok=True)
+pathlib.Path("data").mkdir(parents=True, exist_ok=True)
+
 if __name__ == "__main__":
     # Load training and test sets
     start = time.time()
@@ -59,8 +63,10 @@ if __name__ == "__main__":
     evaluation_metric = EvaluationManager().metric_vector_search
 
     # compile
-    teleprompter = BootstrapFewShot(metric=evaluation_metric, max_labeled_demos=3)
-    compiled_predictor = teleprompter.compile(predict, trainset=train_data)
+    #teleprompter = BootstrapFewShot(metric=evaluation_metric, max_labeled_demos=3)
+    teleprompter = dspy.MIPROv2(metric=evaluation_metric, auto='medium', num_threads=6)
+    compiled_predictor = teleprompter.compile(predict, trainset=train_data, requires_permission_to_run=False)
+    #compiled_predictor = teleprompter.compile(predict, trainset=train_data)
     compiled_predictor.save("models" / pathlib.Path('compiled_model.dspy'))
 
     # evaluate
