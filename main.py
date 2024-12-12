@@ -9,7 +9,6 @@ import certifi
 os.environ['SSL_CERT_FILE'] = certifi.where()
 import pathlib
 import time
-import pdb
 from typing import Literal
 
 import dspy
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     eval_result = evaluate_program(compiled_predictor)
     end = time.time()
     usage = lm_wrapper.get_usage()
-    # pdb.set_trace()
+
     print(eval_result)
     print(f"Usage cost (in cents) about {usage[2]}, Input Tokens: {usage[0]}, Output Tokens {usage[1]}" )
     print("Time taken (in seconds)", end - start)

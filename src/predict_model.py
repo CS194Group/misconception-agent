@@ -1,5 +1,4 @@
 import time
-import pdb
 from typing import Literal
 
 import dspy
@@ -64,7 +63,6 @@ class ExchangeOfThought(dspy.Module):
     def _report_mode(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         # Step 1: A initiates thought
         thought_a = self.agent_a(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
-        # pdb.set_trace()
 
         # Note this for-loop does not keep history of previous rounds, but it includes the chain of toughts if the agents
         for _ in range(self.rounds):
