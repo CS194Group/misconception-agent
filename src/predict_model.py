@@ -2,7 +2,9 @@ import time
 from typing import Literal
 
 import dspy
+import weave
 
+from src.agents import Agent
 #########################################################################################################################
 # The main model (ultilizing all agents together)
 
@@ -25,14 +27,15 @@ class SharedMemoryPool:
 class ExchangeOfThought(dspy.Module):
     def __init__(self, agent_a, agent_b, agent_c, rounds: int = 1, mode: Literal["Debate", "Report", "Memory", "Relay"] = "Report"):
         super().__init__()
-        self.agent_a = agent_a
-        self.agent_b = agent_b
-        self.agent_c = agent_c
-        self.memory_pool = SharedMemoryPool()
-        self.rounds = rounds
-        self.mode = mode
+        self.agent_a: Agent = agent_a
+        self.agent_b: Agent = agent_b
+        self.agent_c: Agent = agent_c
+        self.memory_pool: SharedMemoryPool = SharedMemoryPool()
+        self.rounds: int = rounds
+        self.mode: Literal["Debate", "Report", "Memory", "Relay"] = mode
         assert self.mode == "Report"
 
+    @weave.op()
     def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         #time.sleep(0.5)
         if self.mode == "Report":

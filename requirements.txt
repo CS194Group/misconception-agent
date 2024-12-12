@@ -16,3 +16,4 @@ python-dotenv
 colorama
 faiss-cpu
 matplotlib
+weave

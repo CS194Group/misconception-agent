@@ -2,6 +2,7 @@ import pathlib
 
 import dspy
 import numpy as np
+import weave
 
 from src.agents import SummeryAgent
 from src.dataloader import DataManager
@@ -104,6 +105,7 @@ class EvaluationManager:
             total_ap.append(ap)
         return np.mean(total_ap) if total_ap else 0.0
 
+    @weave.op()
     def metric_vector_search(self, gold: dspy.Example, pred: str, trace=None) -> float:
         """
         Calculates the MAP@25 score for a single prediction using vector search.
@@ -137,6 +139,10 @@ class EvaluationManager:
         map25_score = self.calculate_map_at_25(predictions, ground_truth)
 
         return map25_score
+
+    def metric_vector_search_weave(self, MisconceptionId: int, output: str, trace=None) -> dict:
+        gold = dspy.Example(MisconceptionId=MisconceptionId)
+        return {'map25_score': self.metric_vector_search(gold, output, trace)}
 
 if __name__ == "__main__":
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
