@@ -1,15 +1,16 @@
-'''
-TODO:
-1. Making the code run properly(debuging the FAISS code??)
-2. Figuring out how to handle the inconsistency between training data and prediction results.
-3. Trying more advanced structure.
-'''
+import asyncio
+import os
+
+from weave.trace.context.call_context import get_current_call
+
+import wandb
+import weave
 import os
 import certifi
 os.environ['SSL_CERT_FILE'] = certifi.where()
 import pathlib
 import time
-from typing import Literal
+from typing import Literal, Callable, List
 
 import dspy
 from colorama import init
@@ -23,6 +24,7 @@ from src.evaluation import EvaluationManager
 from src.predict_model import ExchangeOfThought
 from src.util import LanguageModel, PrefixedChatAdapter
 from src.util import Persona
+import uuid
 
 # Initialize colorama
 init(autoreset=True)
@@ -32,14 +34,57 @@ DEBUG: bool = True
 SEED: int = 39
 API: Literal['lambda', 'openai'] = 'lambda'
 MAX_TOKEN: int = 100
+ID = uuid.uuid4().hex[:8]
 
 lm_wrapper = LanguageModel(max_tokens=MAX_TOKEN, service=API)
 custom_adapter = PrefixedChatAdapter()
 dspy.configure(lm=lm_wrapper.lm, adapter=custom_adapter)
 
+# TODO: check if /models exists and if not create
+pathlib.Path("models").mkdir(parents=True, exist_ok=True)
+pathlib.Path("data").mkdir(parents=True, exist_ok=True)
+
+def evaluate_with_weave(evaluation_dataset: List[dspy.Example], model: dspy.Module, scorer: Callable) -> None:
+
+
+    wandb.login(key=os.getenv("WANDB_API_KEY"))
+    wandb.init(project="llma-agents" if not DEBUG else "llma-agents-debug", name=f"run-{ID}")
+    weave.init(project_name="llma-agents" if not DEBUG else "llma-agents-debug")
+
+    weave_eval = weave.Evaluation(
+        dataset=[dspy.Example(**row).toDict() for row in evaluation_dataset],
+        scorers=[scorer],
+        evaluation_name=f"run-{ID}",
+    )
+
+    @weave.op()
+    def my_model(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
+        model_output = model(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
+        # current_call = get_current_call()
+        # if current_call:
+        #     current_call.attributes.update({
+        #         "wandb.run.id": wandb.run.id,
+        #         "wandb.run.name": wandb.run.name,
+        #         "wandb.run.url": wandb.run.url,
+        #         "wandb.run.project": wandb.run.project,
+        #         "wandb.run.entity": wandb.run.entity,
+        #         "wandb.run.config": wandb.run.config
+        #     })
+        return model_output
+
+    result = asyncio.run(weave_eval.evaluate(my_model))
+    wandb.run.config.update({'weave.run.name': ID})
+    wandb.log(result, step=1)
+    wandb.finish()
+    weave.finish()
+    print("Weave Result: " + str(result))
+
+
 if __name__ == "__main__":
     # Load training and test sets
     start = time.time()
+
+    # wandb.init(project="llma-agents" if not DEBUG else "llma-agents-debug")
     examples = DataManager.get_examples(pathlib.Path("data"), debug=DEBUG)
 
     # Split in 80% validation as this is what is suggested here https://dspy.ai/learn/optimization/overview/
@@ -51,7 +96,7 @@ if __name__ == "__main__":
     # agent_c = Agent(name="Agent C" , persona_promt=Persona.AGENT_C_new)
     # agent_d = Agent(name="Agent d" , persona_promt=Persona.AGENT_D_new)
     # agent_e = Agent(name="Agent e" , persona_promt=Persona.AGENT_E_new)
-    
+
     agent_a = AdvancedAgent(name="Agent A" , persona_promt=Persona.AGENT_A_new)
     agent_b = AdvancedAgent(name="Agent B" , persona_promt=Persona.AGENT_B_new)
     agent_c = AdvancedAgent(name="Agent C" , persona_promt=Persona.AGENT_C_new)
@@ -63,21 +108,23 @@ if __name__ == "__main__":
     predict = ExchangeOfThought(
         agent_a, agent_b, agent_c, agent_d, agent_e, rounds=1, mode="Report")
     # predict = Agent(name="Single Agent" )
-    evaluation_metric = EvaluationManager().metric_vector_search
+    eval_manager = EvaluationManager()
 
     # compile
-    teleprompter = BootstrapFewShot(metric=evaluation_metric, max_labeled_demos=3)
-    compiled_predictor = teleprompter.compile(predict, trainset=train_data)
-    compiled_predictor.save("models" / pathlib.Path('compiled_model.dspy'))
+    # teleprompter = BootstrapFewShot(metric=eval_manager.metric_vector_search, max_labeled_demos=3)
+    # teleprompter = dspy.MIPROv2(metric=evaluation_metric, auto='medium', num_threads=6)
+    # compiled_predictor = teleprompter.compile(predict, trainset=train_data, requires_permission_to_run=False)
+    # compiled_predictor = teleprompter.compile(predict, trainset=train_data)
+    # compiled_predictor.save("models" / pathlib.Path('compiled_model.dspy'))
 
-    # evaluate
-    evaluate_program = Evaluate(devset=val_data, metric=evaluation_metric,
-                                num_threads=1, display_progress=True, display_table=10)
+    # train_model()
+    predict.load("models" / pathlib.Path('compiled_model.dspy'))
 
-    eval_result = evaluate_program(compiled_predictor)
+    # --- DO NOT CHANGE anything below this line ---
+    evaluate_with_weave(val_data, predict, eval_manager.metric_vector_search_weave)
+
     end = time.time()
     usage = lm_wrapper.get_usage()
 
-    print(eval_result)
-    print(f"Usage cost (in cents) about {usage[2]}, Input Tokens: {usage[0]}, Output Tokens {usage[1]}" )
+    print(f"Usage cost (in cents) about {usage[2]}, Input Tokens: {usage[0]}, Output Tokens {usage[1]}")
     print("Time taken (in seconds)", end - start)

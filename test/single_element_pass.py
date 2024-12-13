@@ -1,4 +1,4 @@
-
+import os
 import pathlib
 from typing import Literal
 
@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from src import util
 from src.agents import Agent
 from src.dataloader import DataManager
+from src.evaluation import EvaluationManager
 from src.predict_model import ExchangeOfThought
 from src.util import LanguageModel, Persona
 
@@ -17,10 +18,12 @@ SEED=42
 API: Literal['lambda', 'openai'] = 'lambda'
 MAX_TOKEN: int = 100
 
+os.chdir(pathlib.Path.cwd().parent)
+
 lm_wrapper = LanguageModel(max_tokens=MAX_TOKEN, service=API)
 dspy.configure(lm=lm_wrapper.lm)
 
-examples = DataManager.get_examples(pathlib.Path("../data"), debug=False)
+examples = DataManager.get_examples(pathlib.Path("data"), debug=False)
 single_example = None
 for example in examples:
     if example.MisconceptionId == element_id:
@@ -41,10 +44,13 @@ predict = ExchangeOfThought(
 # start = time.time()
 # forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
 # def example_func():
-def test_simple_agent_predict():
-    predict(single_example.QuestionText, single_example.AnswerText, single_example.ConstructName, single_example.SubjectName, single_example.CorrectAnswer)
+def simple_agent_predict():
+    out = predict(single_example.QuestionText, single_example.AnswerText, single_example.ConstructName, single_example.SubjectName, single_example.CorrectAnswer)
+    eval_manager = EvaluationManager()
+    score = eval_manager.metric_vector_search(single_example, out)
     assert True
 
+simple_agent_predict()
 # Measure time of predict function
 # import timeit
 # output_time = timeit.timeit(example_func, number=50)

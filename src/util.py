@@ -14,6 +14,9 @@ class LanguageModel:
     def _get_language_model(self, max_tokens: int, service: Literal['lambda', 'openai']):
         print("SERVICE: ", service)
         if service == 'lambda':
+            if not os.getenv('LAMBDA_API_MODEL') or not os.getenv('LAMBDA_API_KEY') or not os.getenv('LAMBDA_API_BASE'):
+                raise EnvironmentError(
+                    "LAMBDA_API_MODEL, LAMBDA_API_KEY, or LAMBDA_API_BASE not found in environment variables.")
             self.lm = dspy.LM(f"openai/{os.getenv('LAMBDA_API_MODEL')}", max_tokens=max_tokens, api_key=os.getenv("LAMBDA_API_KEY"),
                     api_base=os.getenv("LAMBDA_API_BASE"))
         elif service == 'openai':

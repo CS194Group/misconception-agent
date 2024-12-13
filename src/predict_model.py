@@ -2,7 +2,9 @@ import time
 from typing import Literal
 
 import dspy
+import weave
 
+from src.agents import Agent
 #########################################################################################################################
 # The main model (ultilizing all agents together)
 
@@ -26,21 +28,17 @@ class ExchangeOfThought(dspy.Module):
     # def __init__(self, agent_a, agent_b, agent_c, rounds: int = 1, mode: Literal["Debate", "Report", "Memory", "Relay"] = "Report"):
     def __init__(self, agent_a, agent_b, agent_c, agent_d=None, agent_e=None, rounds: int = 1, mode: Literal["Debate", "Report", "Memory", "Relay"] = "Report"):
         super().__init__()
-        self.agent_a = agent_a
-        self.agent_b = agent_b
-        self.agent_c = agent_c
-        self.agent_d = agent_d
-        self.agent_e = agent_e
-        self.memory_pool = SharedMemoryPool()
-        self.rounds = rounds
-        self.mode = mode
+        self.agent_a: Agent = agent_a
+        self.agent_b: Agent = agent_b
+        self.agent_c: Agent = agent_c
+        self.agent_d: Agent = agent_d
+        self.agent_e: Agent = agent_e
+        self.memory_pool: SharedMemoryPool = SharedMemoryPool()
+        self.rounds: int = rounds
+        self.mode: Literal["Debate", "Report", "Memory", "Relay"] = mode
         # assert self.mode == "Report"
 
-        # # below is the multi init
-        # self.expert_group_a = expert_a
-        # self.expert_group_b = expert_b
-        # self.expert_group_c = expert_c
-
+    @weave.op()
     def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         #time.sleep(0.5)
         if self.mode == "Report":
@@ -140,7 +138,7 @@ class ExchangeOfThought(dspy.Module):
         thought_a.question = question
 
         return thought_a
-    
+
     def _multi4_mode(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         # Step 1: A initiates thought
         thought_a = self.agent_a(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
@@ -159,7 +157,7 @@ class ExchangeOfThought(dspy.Module):
             thought_a = self.agent_a.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=thought_d)
 
         return thought_a
-    
+
     def _bigram_mode(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         # Step 1: A initiates thought
         thought_a = self.agent_a(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
