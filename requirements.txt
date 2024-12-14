@@ -18,3 +18,4 @@ faiss-cpu
 matplotlib
 weave
 certifi
+dacite

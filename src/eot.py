@@ -167,8 +167,13 @@ class ExchangeOfThought(dspy.Module):
             thought_b = self.agent_b.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=thought_a)
             thought_c = self.agent_c.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=thought_a)
 
-            thought_b = self.agent_b.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=thought_c)
-            thought_c = self.agent_c.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=thought_b)
+            context = "A previous student concludes: "
+
+            thought_b_second_pass = self.agent_b.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context= context + thought_c)
+            thought_c_second_pass = self.agent_c.forward(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context= context + thought_b)
+
+            thought_b = thought_b_second_pass
+            thought_c = thought_c_second_pass
 
             prompt = f"For this question's misconception, student b's ideas is \n{thought_b}\nstudent c's ideas is \n{thought_c}\n"
 

@@ -186,3 +186,4 @@ cython_debug/
 models
 wandb/
 wandb_cache/
+logs/

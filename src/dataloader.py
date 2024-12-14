@@ -29,7 +29,7 @@ class DataManager:
         result = DataManager._join_data(train_file, misconception_mapping)
         result = result[result['MisconceptionText'].notna()]
         # TODO: implement shuffeling
-        return  result if not debug else result[:5]
+        return  result if not debug else result[:100]
 
     @staticmethod
     def get_examples(data_folder: pathlib.Path, debug=False):

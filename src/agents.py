@@ -1,3 +1,4 @@
+import pathlib
 from dataclasses import dataclass
 from typing import Tuple
 import dspy
@@ -10,7 +11,7 @@ logging.basicConfig(
     level=logging.WARNING, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
     handlers=[
-        logging.FileHandler("agents.log"), 
+        logging.FileHandler(pathlib.Path("logs") / "agents.log"),
         logging.StreamHandler()
     ]
 )
@@ -28,7 +29,7 @@ class Misconception:
 class BaseAgentSignature(dspy.Signature):
     """Explain the misconception the student has based on his answer."""
     context = dspy.InputField(
-        desc='Debate history of other agents for reference. Empty if no history is available.')
+        desc='History of other agents for reference. Empty if no history is available.')
     QuestionText = dspy.InputField(desc='The question text.')
     AnswerText = dspy.InputField(desc='The student wrong answer text.')
     ConstructName = dspy.InputField()

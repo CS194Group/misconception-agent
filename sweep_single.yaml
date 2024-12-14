@@ -1,0 +1,27 @@
+program: main.py  # Replace with your actual script name
+project: llma-agents-debug
+
+method: grid
+
+parameters:
+  Dspy:
+    parameters:
+      telepropmter:
+        parameters:
+          type:
+            values: ["BootstrapFewShot", "MIPROv2"]
+
+  ExchangeOfThought:
+    parameters:
+      mode:
+        values: ["single"]
+      rounds:
+        values: [1]
+
+metric:
+  name: metric_vector_search_weave.map25_score.mean
+  goal: maximize
+
+command:
+  - D:/no_backup/python_environments/multi-agent-misconceptions/Scripts/python.exe
+  - ${program}
