@@ -213,7 +213,8 @@ class EvaluationManager:
         return map25_score
 
     def metric_vector_search_weave(self, MisconceptionId: int, output: str, trace=None) -> dict:
-        gold = dspy.Example(MisconceptionId=MisconceptionId)
+        # gold = dspy.Example(MisconceptionId=MisconceptionId)
+        gold = dspy.Example(MisconceptionId=MisconceptionId['MisconceptionId'])
         if self.retrive_method == "basic":
             return {'map25_score': self.metric_vector_search_basic(gold, output, trace)}
         else:

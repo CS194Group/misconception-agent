@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 from dacite import from_dict
+import dacite
 
 @dataclass
 class ExchangeOfThoughtConfig:
@@ -25,8 +26,18 @@ class Config:
     ExchangeOfThought: ExchangeOfThoughtConfig
     Dspy: DspyConfig
 
-def load_config(args: dict) -> Config:
-    return from_dict(data_class=Config, data=args)
+def load_config(args_dict):
+    return from_dict(
+        data_class=Config, 
+        data=args_dict,
+        config=dacite.Config(
+            check_types=True,
+            cast=[],
+            forward_references={},
+            strict=True,
+            type_hooks={}
+        )
+    )
 
 # Example
 # args = {

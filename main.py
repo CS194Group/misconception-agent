@@ -40,7 +40,7 @@ init(autoreset=True)
 
 # CONSTANTS
 DEBUG: bool = True
-SEED: int = 39
+SEED: int = 77
 API: Literal['lambda', 'openai'] = 'lambda'
 MAX_TOKEN: int = 100
 ID = uuid.uuid4().hex[:8]
@@ -176,7 +176,7 @@ if __name__ == "__main__":
                     "type": "BootstrapFewShot"  #Literal['BootstrapFewShot', 'MIPROv2'] # Example integer value for TelepropmterConfig.max_labeled_demos
                 },
                 "evaluation": {
-                    "type": "basic"
+                    "type": "multi"
                 }
             }
         }
