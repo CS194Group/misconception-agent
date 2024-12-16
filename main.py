@@ -82,11 +82,7 @@ def main(args: Config):
 
 
     # Set up Agents
-    agent_a = Agent(name="Agent A" , persona_promt=None)
-    agent_b = Agent(name="Agent B" , persona_promt=None)
-    agent_c = Agent(name="Agent C" , persona_promt=None)
-    agent_d = Agent(name="Agent D" , persona_promt=None)
-    agent_e = Agent(name="Agent E" , persona_promt=None)
+
 
     # agent_a = AdvancedAgent(name="Agent A" , persona_promt=Persona.AGENT_A_new)
     # agent_b = AdvancedAgent(name="Agent B" , persona_promt=Persona.AGENT_B_new)
@@ -95,6 +91,11 @@ def main(args: Config):
     # agent_e = AdvancedAgent(name="Agent E" , persona_promt=Persona.AGENT_E_new)
 
     if args.ExchangeOfThought.mode != "single":
+        agent_a = Agent(name="Agent A" , persona_promt=None)
+        agent_b = Agent(name="Agent B" , persona_promt=None)
+        agent_c = Agent(name="Agent C" , persona_promt=None)
+        agent_d = Agent(name="Agent D" , persona_promt=None)
+        agent_e = Agent(name="Agent E" , persona_promt=None)
         predict = ExchangeOfThought(
             agent_a, agent_b, agent_c, agent_d, agent_e, rounds=args.ExchangeOfThought.rounds, mode=args.ExchangeOfThought.mode)
         persona_prompts = {
@@ -106,9 +107,9 @@ def main(args: Config):
             "debug": DEBUG
         }
     else:
-        predict = AdvancedAgent(name="Agent A" , persona_promt=None)
+        predict = Agent(name="Agent A" , persona_promt=Persona.AGENT_A_new)
         persona_prompts = {
-            "Agent A Persona": agent_a.prefix_promt,
+            "Agent A Persona": predict.prefix_promt,
             "debug": DEBUG
         }
 
@@ -128,12 +129,16 @@ def main(args: Config):
         compiled_predictor = teleprompter.compile(predict, trainset=train_data, requires_permission_to_run=False)
         compiled_predictor.save("models" / pathlib.Path(f'compiled_model-{ID}.dspy'))
         print("Finished training MIPROv2...")
+    elif args.Dspy.telepropmter.type == "untrained":
+        compiled_predictor = predict
+        pass
     else:
         predict.load("models" / pathlib.Path(f"compiled_model-{args.Dspy.telepropmter.type}.dspy"))
+        compiled_predictor = predict
         print("Finished loading")
 
     # --- DO NOT CHANGE anything below this line ---
-    evaluate_with_weave(val_data, predict, eval_manager.metric_vector_search_weave)
+    evaluate_with_weave(val_data, compiled_predictor, eval_manager.metric_vector_search_weave)
 
     end = time.time()
     usage = lm_wrapper.get_usage()
@@ -146,7 +151,8 @@ def main(args: Config):
         "dataset" : {
             "train.size": len(train_data),
             "val.size": len(val_data)
-        }
+        },
+        "run_type" : "new"
     })
     #wandb.save("models" / pathlib.Path(f'compiled_model-{ID}.dspy'))
 
@@ -160,7 +166,7 @@ def main(args: Config):
 if __name__ == "__main__":
     wandb.login(key=os.getenv("WANDB_API_KEY"))
     wandb.init(project="llma-agents" if not DEBUG else "llma-agents-debug", name=f"run-{ID}")
-    USE_WANDB_CONFIG = True
+    USE_WANDB_CONFIG = False
     if USE_WANDB_CONFIG:
         args = load_config(dict(wandb.config))
     else:
@@ -171,7 +177,7 @@ if __name__ == "__main__":
             },
             "Dspy": {
                 "telepropmter": {             # Nested TelepropmterConfig
-                    "type": "BootstrapFewShot"  #Literal['BootstrapFewShot', 'MIPROv2'] # Example integer value for TelepropmterConfig.max_labeled_demos
+                    "type": "untrained"  #Literal['BootstrapFewShot', 'MIPROv2'] # Example integer value for TelepropmterConfig.max_labeled_demos
                 }
             }
         }

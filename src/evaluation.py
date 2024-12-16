@@ -3,6 +3,7 @@ import pathlib
 import dspy
 import numpy as np
 import weave
+from typeguard import typechecked
 
 from src.agents import SummeryAgent
 from src.dataloader import DataManager
@@ -140,8 +141,9 @@ class EvaluationManager:
 
         return map25_score
 
-    def metric_vector_search_weave(self, MisconceptionId: int, output: str, trace=None) -> dict:
-        gold = dspy.Example(MisconceptionId=MisconceptionId)
+    @typechecked
+    def metric_vector_search_weave(self, MisconceptionId: float, output: str, trace=None) -> dict:
+        gold = dspy.Example(MisconceptionId=int(MisconceptionId))
         return {'map25_score': self.metric_vector_search(gold, output, trace)}
 
 if __name__ == "__main__":
