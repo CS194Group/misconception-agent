@@ -9,14 +9,14 @@ parameters:
       telepropmter:
         parameters:
           type:
-            values: ["BootstrapFewShot", "MIPROv2"]
+            values: ["untrained"] #, "MIPROv2"
 
   ExchangeOfThought:
     parameters:
       mode:
         values: ["Report", "multi_4", "bigram"]
       rounds:
-        values: [ 1, 2]
+        values: [1, 2, 3]
 
 
 metric:

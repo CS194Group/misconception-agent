@@ -19,3 +19,4 @@ matplotlib
 weave
 certifi
 dacite
+typeguard
