@@ -10,6 +10,10 @@ parameters:
         parameters:
           type:
             values: ["BootstrapFewShot", "MIPROv2"]
+      evaluation:
+        parameters:
+          type:
+            values: ["basic", "multi"]
 
   ExchangeOfThought:
     parameters:

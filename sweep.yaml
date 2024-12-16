@@ -9,7 +9,11 @@ parameters:
       telepropmter:
         parameters:
           type:
-            values: ["BootstrapFewShot", "MIPROv2"]
+            values: ["BootstrapFewShot"]
+      evaluation:
+        parameters:
+          type:
+            values: ["basic", "multi"]
 
   ExchangeOfThought:
     parameters:
@@ -24,5 +28,5 @@ metric:
   goal: maximize
 
 command:
-  - D:/no_backup/python_environments/multi-agent-misconceptions/Scripts/python.exe
+  - C:\Users\MECHREVO\.conda\envs\194_env\python.exe
   - ${program}

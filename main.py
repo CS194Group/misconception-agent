@@ -1,10 +1,11 @@
-import asyncio
-import wandb
-import weave
 import os
 import certifi
 
 os.environ['SSL_CERT_FILE'] = certifi.where()
+
+import asyncio
+import wandb
+import weave
 
 import pathlib
 import time
@@ -18,6 +19,7 @@ from sklearn.model_selection import train_test_split
 from dataclasses import asdict
 
 import uuid
+
 
 # TODO: check if /models exists and if not create
 pathlib.Path("models").mkdir(parents=True, exist_ok=True)
@@ -106,7 +108,7 @@ def main(args: Config):
             "debug": DEBUG
         }
     else:
-        predict = AdvancedAgent(name="Agent A" , persona_promt=None)
+        predict = Agent(name="Agent A" , persona_promt=None)
         persona_prompts = {
             "Agent A Persona": agent_a.prefix_promt,
             "debug": DEBUG
@@ -114,7 +116,7 @@ def main(args: Config):
 
     wandb.config.update(persona_prompts)
 
-    eval_manager = EvaluationManager()
+    eval_manager = EvaluationManager(retrive_method=args.Dspy.evaluation.type)
 
     # compile
     print("Start training ...")
@@ -172,6 +174,9 @@ if __name__ == "__main__":
             "Dspy": {
                 "telepropmter": {             # Nested TelepropmterConfig
                     "type": "BootstrapFewShot"  #Literal['BootstrapFewShot', 'MIPROv2'] # Example integer value for TelepropmterConfig.max_labeled_demos
+                },
+                "evaluation": {
+                    "type": "basic"
                 }
             }
         }

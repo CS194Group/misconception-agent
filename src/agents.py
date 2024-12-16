@@ -24,6 +24,42 @@ class Misconception:
     similarity: float = 0.0
 
 ###########################################################################################################
+# The reasoning agent
+class ReasoningAgentSignature(dspy.Signature):
+    """Solve the problems based on the question and the right answer."""
+    context = dspy.InputField(
+        desc='History of other agents for reference. Empty if no history is available.')
+    QuestionText = dspy.InputField(desc='The question text.')
+    ConstructName = dspy.InputField()
+    SubjectName = dspy.InputField(desc="The subject of the question.")
+    CorrectAnswer = dspy.InputField(desc="The correct answer.")
+    ReasoningText = dspy.OutputField(
+        desc='Based on the provided correct answer, its reasoning process, and the incorrect answer obtained, identify the step where the error occurred, and determine the reason for the mistake.')
+
+class ReasoningAgent(dspy.Module):
+    def __init__(self, name, persona_promt=None):
+        super().__init__()
+        self.name = name
+        self.prefix_promt = persona_promt
+        self.process = dspy.Predict(ReasoningAgentSignature)
+
+    def forward(self, QuestionText, ConstructName, SubjectName, CorrectAnswer, context=None) -> str:
+        # Directly pass the inputs to the process method
+        try:
+            outputs = self.process(
+                context=context,
+                QuestionText=QuestionText,
+                ConstructName=ConstructName,
+                SubjectName=SubjectName,
+                CorrectAnswer=CorrectAnswer,
+                prefix = self.prefix_promt
+            )
+
+            return outputs.completions[0].ReasoningText
+        except Exception as e:
+            print(e)
+            return "Failed to generate reasoning process."
+
 # The basic agent
 
 class BaseAgentSignature(dspy.Signature):
@@ -35,19 +71,29 @@ class BaseAgentSignature(dspy.Signature):
     ConstructName = dspy.InputField()
     SubjectName = dspy.InputField(desc="The subject of the question.")
     CorrectAnswer = dspy.InputField(desc="The correct answer.")
+    ReasoningProcess = dspy.InputField(desc="The reasoning solution of the question.")
     MisconceptionText = dspy.OutputField(
-        desc='Explaination of the misconception the student has based on his answer in one percise sentences.')
+        desc='Explaination of the misconception the student has based on his answer find out which stage he makes mistake and conclude in one percise sentences.')
 
 class Agent(dspy.Module):
     def __init__(self, name, persona_promt=None):
         super().__init__()
         self.name = name
         self.prefix_promt = persona_promt
+        self.reasoning_agent = ReasoningAgent(name=f"Reasoning {name}" , persona_promt=None)
         self.process = dspy.Predict(BaseAgentSignature)
 
     def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None) -> str:
         # Directly pass the inputs to the process method
         try:
+            ReasoningProcess = self.reasoning_agent(
+                context=context,
+                QuestionText=QuestionText,
+                ConstructName=ConstructName,
+                SubjectName=SubjectName,
+                CorrectAnswer=CorrectAnswer,
+            )
+            
             outputs = self.process(
                 context=context,
                 QuestionText=QuestionText,
@@ -55,6 +101,7 @@ class Agent(dspy.Module):
                 ConstructName=ConstructName,
                 SubjectName=SubjectName,
                 CorrectAnswer=CorrectAnswer,
+                ReasoningProcess=ReasoningProcess,
                 prefix = self.prefix_promt
             )
 

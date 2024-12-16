@@ -1,8 +1,14 @@
 import pathlib
 
 import dspy
-import numpy as np
+import faiss
+import torch
+import dspy
 import weave
+
+import pandas as pd
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 from src.agents import SummeryAgent
 from src.dataloader import DataManager
@@ -20,10 +26,29 @@ class SimpleScorerAgentSignature(dspy.Signature):
 
 # Evaluating the answer
 class EvaluationManager:
-    def __init__(self):
+    def __init__(self, retrive_method="basic", top_k=75):
         self.misconception_db = MisconceptionDB("data" / pathlib.Path("misconception_mapping.csv"))
         self.misconceptions_df = DataManager.get_misconceptions("data" / pathlib.Path("misconception_mapping.csv"))
         self.summery_agent = SummeryAgent(name='Summery Agent')
+        self.retrive_method = retrive_method
+
+        # multi-layer retrieve 
+        categories_array = np.load("./db_index/list.npy")
+        index = faiss.read_index("./db_index/faiss.bin")
+        res = faiss.StandardGpuResources()
+
+        self.categories_list = categories_array.tolist()
+        self.model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+        self.misconception_sents = faiss.index_cpu_to_gpu(res, 0, index)
+        self.topk = top_k
+        self.df = pd.read_csv("./data/misconception_mapping.csv")
+
+    def embedding_query(self, query):
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        return self.model.encode([query], convert_to_tensor=False, device=device)
+    
+    def cls_match(self, query_embedding):
+        return self.misconception_sents.search(np.array(query_embedding), self.topk)
 
     @staticmethod
     def metric(gold, pred, trace=None):
@@ -106,7 +131,7 @@ class EvaluationManager:
         return np.mean(total_ap) if total_ap else 0.0
 
     @weave.op()
-    def metric_vector_search(self, gold: dspy.Example, pred: str, trace=None) -> float:
+    def metric_vector_search_basic(self, gold: dspy.Example, pred: str, trace=None) -> float:
         """
         Calculates the MAP@25 score for a single prediction using vector search.
 
@@ -139,10 +164,60 @@ class EvaluationManager:
         map25_score = self.calculate_map_at_25(predictions, ground_truth)
 
         return map25_score
+    
+    # multi-layer retrieve 
+    @weave.op()
+    def metric_vector_search_multi(self, gold: dspy.Example, pred: str, trace=None) -> float:
+        """
+        Calculates the MAP@25 score for a single prediction using vector search.
+
+        Args:
+            gold (dspy.Example): The gold example containing the ground truth misconception ID.
+            pred (str): The predicted misconception text.
+            trace: Optional trace information (not used).
+
+        Returns:
+            float: The MAP@25 score for the prediction.
+        """
+        # logging.warning(f"Gold: {gold.MisconceptionId}")
+        if pred == "Failed to generate misconception explanation.":
+            return 0.0
+        # Extract the ground truth misconception ID from the gold example
+        ground_truth_id = gold.MisconceptionId  # Assuming gold.answer holds the MisconceptionId
+
+        # Perform vector search to retrieve top 40 similar misconception sentences
+        query_embedding = self.embedding_query(pred)
+        _, indices = self.cls_match(query_embedding)
+
+        seen_categories = set()
+        candidates = {}
+        for ind in indices[0]:
+            category = self.categories_list[ind]
+            if len(candidates) >= 25:
+                break
+            if category not in seen_categories:
+                candidates[ind] = category
+                seen_categories.add(category)
+            
+        predicted_class_ids = []
+        for _, candidate in candidates.items():
+            predicted_class_ids.append(self.df[self.df['MisconceptionName'] == candidate].iloc[0]['MisconceptionId'])
+
+        # Prepare numpy arrays for calculate_map_at_25
+        predictions = np.array([predicted_class_ids])
+        ground_truth = np.array([ground_truth_id])
+
+        # Calculate MAP@25 using the existing method
+        map25_score = self.calculate_map_at_25(predictions, ground_truth)
+
+        return map25_score
 
     def metric_vector_search_weave(self, MisconceptionId: int, output: str, trace=None) -> dict:
         gold = dspy.Example(MisconceptionId=MisconceptionId)
-        return {'map25_score': self.metric_vector_search(gold, output, trace)}
+        if self.retrive_method == "basic":
+            return {'map25_score': self.metric_vector_search_basic(gold, output, trace)}
+        else:
+            return {'map25_score': self.metric_vector_search_multi(gold, output, trace)}
 
 if __name__ == "__main__":
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

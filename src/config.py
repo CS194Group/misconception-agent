@@ -12,8 +12,13 @@ class TelepropmterConfig:
     type: str #Literal['BootstrapFewShot', 'MIPROv2']
 
 @dataclass
+class EvaluationConfig:
+    type: Literal["basic", "multi"]
+
+@dataclass
 class DspyConfig:
     telepropmter: TelepropmterConfig # Replace 'str' with actual type
+    evaluation: EvaluationConfig
 
 @dataclass
 class Config:
