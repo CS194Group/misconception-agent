@@ -121,12 +121,12 @@ def main(args: Config):
     # compile
     print("Start training ...")
     if args.Dspy.telepropmter.type == "BootstrapFewShot":
-        teleprompter = BootstrapFewShot(metric=eval_manager.metric_vector_search, max_labeled_demos=3)
+        teleprompter = BootstrapFewShot(metric=eval_manager.metric_vector_search_weave, max_labeled_demos=3)
         compiled_predictor = teleprompter.compile(predict, trainset=train_data)
         compiled_predictor.save("models" / pathlib.Path(f'compiled_model-{ID}.dspy'))
         print("Finished training BootstrapFewShot...")
     elif args.Dspy.telepropmter.type == "MIPROv2":
-        teleprompter = dspy.MIPROv2(metric=eval_manager.metric_vector_search, auto='medium', num_threads=6)
+        teleprompter = dspy.MIPROv2(metric=eval_manager.metric_vector_search_weave, auto='medium', num_threads=6)
         compiled_predictor = teleprompter.compile(predict, trainset=train_data, requires_permission_to_run=False)
         compiled_predictor.save("models" / pathlib.Path(f'compiled_model-{ID}.dspy'))
         print("Finished training MIPROv2...")
@@ -135,7 +135,7 @@ def main(args: Config):
         print("Finished loading")
 
     # --- DO NOT CHANGE anything below this line ---
-    evaluate_with_weave(val_data, predict, eval_manager.metric_vector_search_weave)
+    evaluate_with_weave(val_data, compiled_predictor, eval_manager.metric_vector_search_weave)
 
     end = time.time()
     usage = lm_wrapper.get_usage()
