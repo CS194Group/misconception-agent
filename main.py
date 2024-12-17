@@ -39,8 +39,8 @@ init(autoreset=True)
 # CONSTANTS
 DEBUG: bool = True
 SEED: int = 39
-API: Literal['lambda', 'openai'] = 'openai'
-MAX_TOKEN: int = 100
+API: Literal['lambda', 'openai'] = 'lambda'
+MAX_TOKEN: int = 500
 ID = uuid.uuid4().hex[:8]
 
 lm_wrapper = LanguageModel(max_tokens=MAX_TOKEN, service=API)
@@ -106,15 +106,15 @@ def main(args: Config):
     # agent_e = AdvancedAgent(name="Agent E" , persona_promt=Persona.AGENT_E_new)
 
     if args.ExchangeOfThought.mode != "single":
-        agent_a = Agent(name="Agent A" , persona_promt=persona_prompts["A"])
-        agent_b = Agent(name="Agent B" , persona_promt=persona_prompts["B"])
-        agent_c = Agent(name="Agent C" , persona_promt=persona_prompts["C"])
-        agent_d = Agent(name="Agent D" , persona_promt=persona_prompts["D"])
-        agent_e = Agent(name="Agent E" , persona_promt=persona_prompts["E"])
+        agent_a = Agent(name="Agent A" , persona_promt=persona_prompts["A"], agent_type=args.ExchangeOfThought.baseagent)
+        agent_b = Agent(name="Agent B" , persona_promt=persona_prompts["B"], agent_type=args.ExchangeOfThought.baseagent)
+        agent_c = Agent(name="Agent C" , persona_promt=persona_prompts["C"], agent_type=args.ExchangeOfThought.baseagent)
+        agent_d = Agent(name="Agent D" , persona_promt=persona_prompts["D"], agent_type=args.ExchangeOfThought.baseagent)
+        agent_e = Agent(name="Agent E" , persona_promt=persona_prompts["E"], agent_type=args.ExchangeOfThought.baseagent)
         predict = ExchangeOfThought(
             agent_a, agent_b, agent_c, agent_d, agent_e, rounds=args.ExchangeOfThought.rounds, mode=args.ExchangeOfThought.mode)
     else:
-        predict = Agent(name="Agent A" , persona_promt=persona_prompts["A"])
+        predict = Agent(name="Agent A" , persona_promt=persona_prompts["A"], agent_type=args.ExchangeOfThought.baseagent)
         if args.ExchangeOfThought.rounds != 1:
             wandb.finish()
             weave.finish()

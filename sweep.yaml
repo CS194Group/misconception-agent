@@ -14,12 +14,13 @@ parameters:
   ExchangeOfThought:
     parameters:
       mode:
-        values: ["Report", "multi_4", "bigram", "Debate", "single"]
+        values: ["Report", "multi_4", "bigram", "single"]
       rounds:
         values: [1, 2]
       UsePersonaPromts:
-        values: [true, false]
-
+        values: [false]
+      baseagent:
+        values: ["reasoning"]
 
 metric:
   name: metric_vector_search_weave.map25_score.mean

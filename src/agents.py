@@ -2,7 +2,8 @@ import pathlib
 from dataclasses import dataclass
 import dspy
 import logging
-import pdb
+
+from dotenv.variables import Literal
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -91,10 +92,10 @@ class BaseAgentSignature(dspy.Signature):
 
 
 class Agent(dspy.Module):
-    def __init__(self, name, agent_type='basic', persona_promt=None):
+    def __init__(self, name, agent_type = "basic", persona_promt=None):
         super().__init__()
         self.name = name
-        self.agent_type = agent_type
+        self.agent_type = agent_type.lower()
         self.prefix_promt = persona_promt
         self.reasoning_agent = ReasoningAgent(name=f"Reasoning {name}", persona_promt=None)
         self.process_reasoning = dspy.Predict(BaseReasoningAgentSignature)
@@ -115,7 +116,7 @@ class Agent(dspy.Module):
                 )
 
                 return outputs.completions[0].MisconceptionText
-            else:
+            elif self.agent_type == 'reasoning':
                 ReasoningProcess = self.reasoning_agent(
                     context=context,
                     QuestionText=QuestionText,
@@ -136,6 +137,8 @@ class Agent(dspy.Module):
                 )
 
                 return outputs.completions[0].MisconceptionText
+            else:
+                print("ERROR: Agent type not recognized.")
         except Exception as e:
             print(e)
             return "Failed to generate misconception explanation."
