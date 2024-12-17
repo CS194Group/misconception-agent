@@ -39,7 +39,7 @@ init(autoreset=True)
 # CONSTANTS
 DEBUG: bool = True
 SEED: int = 39
-API: Literal['lambda', 'openai'] = 'lambda'
+API: Literal['lambda', 'openai'] = 'openai'
 MAX_TOKEN: int = 100
 ID = uuid.uuid4().hex[:8]
 
@@ -82,7 +82,22 @@ def main(args: Config):
 
 
     # Set up Agents
-
+    if args.ExchangeOfThought.UsePersonaPromts:
+        persona_prompts = {
+            "A": Persona.AGENT_A_original,
+            "B": Persona.AGENT_B_original,
+            "C": Persona.AGENT_C_original,
+            "D": Persona.AGENT_D_new,
+            "E": Persona.AGENT_E_new
+        }
+    else:
+        persona_prompts = {
+            "A": None,
+            "B": None,
+            "C": None,
+            "D": None,
+            "E": None
+        }
 
     # agent_a = AdvancedAgent(name="Agent A" , persona_promt=Persona.AGENT_A_new)
     # agent_b = AdvancedAgent(name="Agent B" , persona_promt=Persona.AGENT_B_new)
@@ -91,29 +106,29 @@ def main(args: Config):
     # agent_e = AdvancedAgent(name="Agent E" , persona_promt=Persona.AGENT_E_new)
 
     if args.ExchangeOfThought.mode != "single":
-        agent_a = Agent(name="Agent A" , persona_promt=None)
-        agent_b = Agent(name="Agent B" , persona_promt=None)
-        agent_c = Agent(name="Agent C" , persona_promt=None)
-        agent_d = Agent(name="Agent D" , persona_promt=None)
-        agent_e = Agent(name="Agent E" , persona_promt=None)
+        agent_a = Agent(name="Agent A" , persona_promt=persona_prompts["A"])
+        agent_b = Agent(name="Agent B" , persona_promt=persona_prompts["B"])
+        agent_c = Agent(name="Agent C" , persona_promt=persona_prompts["C"])
+        agent_d = Agent(name="Agent D" , persona_promt=persona_prompts["D"])
+        agent_e = Agent(name="Agent E" , persona_promt=persona_prompts["E"])
         predict = ExchangeOfThought(
             agent_a, agent_b, agent_c, agent_d, agent_e, rounds=args.ExchangeOfThought.rounds, mode=args.ExchangeOfThought.mode)
-        persona_prompts = {
-            "Agent A Persona": agent_a.prefix_promt,
-            "Agent B Persona": agent_b.prefix_promt,
-            "Agent C Persona": agent_c.prefix_promt,
-            "Agent D Persona": agent_d.prefix_promt,
-            "Agent E Persona": agent_e.prefix_promt,
-            "debug": DEBUG
-        }
     else:
-        predict = Agent(name="Agent A" , persona_promt=Persona.AGENT_A_new)
-        persona_prompts = {
-            "Agent A Persona": predict.prefix_promt,
-            "debug": DEBUG
-        }
+        predict = Agent(name="Agent A" , persona_promt=persona_prompts["A"])
+        if args.ExchangeOfThought.rounds != 1:
+            wandb.finish()
+            weave.finish()
+            exit("Invalid rounds for single agent")
 
-    wandb.config.update(persona_prompts)
+    merged_config = {
+        **persona_prompts,
+        "debug": DEBUG,
+        "seed": SEED,
+        "api": API,
+        "dataset": {"train.size": len(train_data), "val.size": len(val_data)},
+        "version": "v2",
+    }
+    wandb.config.update(merged_config)
 
     eval_manager = EvaluationManager()
 
@@ -147,12 +162,7 @@ def main(args: Config):
         "usage_cost_cents": usage[2],
         "input_tokens": usage[0],
         "output_tokens": usage[1],
-        "time_taken_seconds": end - start,
-        "dataset" : {
-            "train.size": len(train_data),
-            "val.size": len(val_data)
-        },
-        "run_type" : "new"
+        "time_taken_seconds": end - start
     })
     #wandb.save("models" / pathlib.Path(f'compiled_model-{ID}.dspy'))
 
@@ -166,18 +176,20 @@ def main(args: Config):
 if __name__ == "__main__":
     wandb.login(key=os.getenv("WANDB_API_KEY"))
     wandb.init(project="llma-agents" if not DEBUG else "llma-agents-debug", name=f"run-{ID}")
-    USE_WANDB_CONFIG = False
+    USE_WANDB_CONFIG = True
     if USE_WANDB_CONFIG:
         args = load_config(dict(wandb.config))
     else:
+        print("WARNING: WanDB config not used!")
         args_dict = {
             "ExchangeOfThought": {
-                "mode": "multi_4",
-                "rounds": 1
+                "mode": "Debate",
+                "rounds": 1,
+                "UsePersonaPromts": True
             },
             "Dspy": {
                 "telepropmter": {             # Nested TelepropmterConfig
-                    "type": "untrained"  #Literal['BootstrapFewShot', 'MIPROv2'] # Example integer value for TelepropmterConfig.max_labeled_demos
+                    "type": "BootstrapFewShot"  #Literal['BootstrapFewShot', 'MIPROv2'] # Example integer value for TelepropmterConfig.max_labeled_demos
                 }
             }
         }

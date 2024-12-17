@@ -4,8 +4,9 @@ from dacite import from_dict
 
 @dataclass
 class ExchangeOfThoughtConfig:
-    mode: Literal["Report", "bigram", "multi_4", "single"]  # Replace 'OtherMode' with actual allowed literals
+    mode: Literal["Report", "bigram", "multi_4", "single", "Debate"]  # Replace 'OtherMode' with actual allowed literals
     rounds: int
+    UsePersonaPromts: bool
 
 @dataclass
 class TelepropmterConfig:

@@ -44,7 +44,7 @@ class ExchangeOfThought(dspy.Module):
         if self.mode == "Report":
             return self._report_mode(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
         elif self.mode == "Debate":
-            return self._debate_mode(QuestionText)
+            return self._debate_mode(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
         elif self.mode == "Memory":
             return self._memory_mode(QuestionText)
         elif self.mode == "Relay":
@@ -77,20 +77,19 @@ class ExchangeOfThought(dspy.Module):
 
         return thought_a
 
-    def _debate_mode(self, question):
+    def _debate_mode(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer):
         # Step 1: B and C initiate thought
-        thought_b = self.agent_b.forward(question)
-        thought_c = self.agent_c.forward(question)
+        thought_b = self.agent_b(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
+        thought_c = self.agent_c(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer)
 
         for _ in range(self.rounds):
             # Step 2: B and C communicates back and forth
-            thought_b = self.agent_b.forward(question, context=thought_c)
-            thought_c = self.agent_c.forward(question, context=thought_b)
+            thought_b = self.agent_b(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=thought_c)
+            thought_c = self.agent_c(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=thought_b)
 
         # Step 3: B and C send their final thoughts to A
         combined_thoughts = f"Agent B concludes: ({thought_b}), Agent C concludes: ({thought_c})"
-        thought_a = self.agent_a.forward(question, context=combined_thoughts)
-        thought_a.question = question
+        thought_a = self.agent_a(QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=combined_thoughts)
 
         return thought_a
 
