@@ -26,7 +26,7 @@ pathlib.Path("logs").mkdir(parents=True, exist_ok=True)
 
 from src.config import Config, load_config
 from src.util import Persona
-from src.agents import Agent, AdvancedAgent
+from src.agents import Agent
 from src.dataloader import DataManager
 from src.evaluation import EvaluationManager
 from src.eot import ExchangeOfThought
