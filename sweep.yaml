@@ -9,14 +9,16 @@ parameters:
       telepropmter:
         parameters:
           type:
-            values: ["untrained"] #, "MIPROv2"
+            values: ["BootstrapFewShot"] #, "MIPROv2"
 
   ExchangeOfThought:
     parameters:
       mode:
-        values: ["Report", "multi_4", "bigram"]
+        values: ["Report", "multi_4", "bigram", "Debate", "single"]
       rounds:
-        values: [1, 2, 3]
+        values: [1, 2]
+      UsePersonaPromts:
+        values: [true, false]
 
 
 metric:
