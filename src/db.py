@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from src.agents import SemanticSearchModule, Misconception
+from src.agents import Misconception
 
 #########################################################################################################################
 # Retrive model, using SentenceTransformer and SemanticSearchModule
@@ -32,7 +32,7 @@ class MisconceptionDB:
         required_columns = ['MisconceptionId', 'MisconceptionName']
         assert all(col in self.df.columns for col in required_columns)
 
-        self.semantic_search = SemanticSearchModule()
+        # self.semantic_search = SemanticSearchModule()
         self.encoder = SentenceTransformer(encoder_name)
         self.index, self.embeddings = self.init_faiss_index()
 
@@ -124,55 +124,55 @@ class MisconceptionDB:
 
         return replaced_results
 
-    def hybrid_search(self, query: str, top_k: int = 3, pre_filter_k: int = 25) -> List[Misconception]:
-        """
-        Performs a hybrid search combining vector-based and semantic-based ranking.
-
-        Steps:
-           1. Uses FAISS to retrieve the top `pre_filter_k` closest misconceptions based on vector similarity.
-           2. Reranks these misconceptions using a semantic scoring mechanism.
-           3. Combines both scores to compute a final similarity score.
-           4. Returns the top `top_k` misconceptions based on the combined similarity.
-
-        Args:
-           query (str): The search query string.
-           top_k (int, optional): The number of top results to return after reranking. Defaults to 1.
-           pre_filter_k (int, optional): The number of initial results to retrieve using vector search.
-                                          Defaults to 5.
-
-        Returns:
-           List[Misconception]: A list of Misconception objects sorted by their combined similarity score
-                                in descending order.
-                                Higher similarity scores indicate more relevant misconceptions.
-        """
-        # First use FAISS to pick pre_filter_k misconception, and then use agent to rerank
-
-        vector_results = self.vector_search(query, pre_filter_k)
-
-        results = []
-        for idx, vector_distance in vector_results:
-            row = self.df.iloc[idx]
-
-            semantic_score, explanation = self.semantic_search(
-                query,
-                row['MisconceptionName']
-            )
-
-            vector_score = 1 / (1 + vector_distance)
-
-            misconception = Misconception(
-                misconception_id=float(row['MisconceptionId']),
-                misconception=row['MisconceptionName'],
-                similarity=0.7 * semantic_score + 0.3 * vector_score
-            )
-
-            results.append(misconception)
-
-        return sorted(
-            results,
-            key=lambda x: x.similarity,
-            reverse=True
-        )[:top_k]
+    # def hybrid_search(self, query: str, top_k: int = 3, pre_filter_k: int = 25) -> List[Misconception]:
+    #     """
+    #     Performs a hybrid search combining vector-based and semantic-based ranking.
+    #
+    #     Steps:
+    #        1. Uses FAISS to retrieve the top `pre_filter_k` closest misconceptions based on vector similarity.
+    #        2. Reranks these misconceptions using a semantic scoring mechanism.
+    #        3. Combines both scores to compute a final similarity score.
+    #        4. Returns the top `top_k` misconceptions based on the combined similarity.
+    #
+    #     Args:
+    #        query (str): The search query string.
+    #        top_k (int, optional): The number of top results to return after reranking. Defaults to 1.
+    #        pre_filter_k (int, optional): The number of initial results to retrieve using vector search.
+    #                                       Defaults to 5.
+    #
+    #     Returns:
+    #        List[Misconception]: A list of Misconception objects sorted by their combined similarity score
+    #                             in descending order.
+    #                             Higher similarity scores indicate more relevant misconceptions.
+    #     """
+    #     # First use FAISS to pick pre_filter_k misconception, and then use agent to rerank
+    #
+    #     vector_results = self.vector_search(query, pre_filter_k)
+    #
+    #     results = []
+    #     for idx, vector_distance in vector_results:
+    #         row = self.df.iloc[idx]
+    #
+    #         semantic_score, explanation = self.semantic_search(
+    #             query,
+    #             row['MisconceptionName']
+    #         )
+    #
+    #         vector_score = 1 / (1 + vector_distance)
+    #
+    #         misconception = Misconception(
+    #             misconception_id=float(row['MisconceptionId']),
+    #             misconception=row['MisconceptionName'],
+    #             similarity=0.7 * semantic_score + 0.3 * vector_score
+    #         )
+    #
+    #         results.append(misconception)
+    #
+    #     return sorted(
+    #         results,
+    #         key=lambda x: x.similarity,
+    #         reverse=True
+    #     )[:top_k]
 
     def calculate_l2_distance(self, query: str, true_class_id: int) -> float:
         """

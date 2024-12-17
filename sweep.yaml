@@ -14,7 +14,7 @@ parameters:
   ExchangeOfThought:
     parameters:
       mode:
-        values: ["Report", "multi_4", "bigram", "single"]
+        values: ["bigram", "single","multi_4", "Report" ]
       rounds:
         values: [1, 2]
       UsePersonaPromts:

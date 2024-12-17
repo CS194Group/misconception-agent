@@ -39,8 +39,8 @@ init(autoreset=True)
 # CONSTANTS
 DEBUG: bool = True
 SEED: int = 39
-API: Literal['lambda', 'openai'] = 'lambda'
-MAX_TOKEN: int = 500
+API: Literal['lambda', 'openai'] = 'openai'
+MAX_TOKEN: int = 200
 ID = uuid.uuid4().hex[:8]
 
 lm_wrapper = LanguageModel(max_tokens=MAX_TOKEN, service=API)
