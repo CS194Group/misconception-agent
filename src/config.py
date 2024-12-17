@@ -5,6 +5,7 @@ import dacite
 
 @dataclass
 class ExchangeOfThoughtConfig:
+    baseagent: Literal["basic", "reasoning"]
     mode: Literal["Report", "bigram", "multi_4", "single"]  # Replace 'OtherMode' with actual allowed literals
     rounds: int
 

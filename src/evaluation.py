@@ -16,6 +16,7 @@ from src.db import MisconceptionDB
 from src.util import LanguageModel
 from typing import Literal
 import os
+import pdb
 
 class SimpleScorerAgentSignature(dspy.Signature):
     """Predict the similarity score between the groundtruth and prediction. Focus on how similar the content is only. Give a high score if the content is the same. Give a low score if the content is different. Provide a score between 0 and 1.
@@ -214,11 +215,18 @@ class EvaluationManager:
 
     def metric_vector_search_weave(self, MisconceptionId: int, output: str, trace=None) -> dict:
         # gold = dspy.Example(MisconceptionId=MisconceptionId)
-        gold = dspy.Example(MisconceptionId=MisconceptionId['MisconceptionId'])
+        # print(MisconceptionId, type(MisconceptionId))
+        # pdb.set_trace()
+        try:
+            gold = dspy.Example(MisconceptionId=MisconceptionId['MisconceptionId'])
+        except:
+            gold = dspy.Example(MisconceptionId=MisconceptionId)
+            
         if self.retrive_method == "basic":
             return {'map25_score': self.metric_vector_search_basic(gold, output, trace)}
         else:
             return {'map25_score': self.metric_vector_search_multi(gold, output, trace)}
+
 
 if __name__ == "__main__":
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

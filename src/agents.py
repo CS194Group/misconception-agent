@@ -62,7 +62,7 @@ class ReasoningAgent(dspy.Module):
 
 # The basic agent
 
-class BaseAgentSignature(dspy.Signature):
+class BaseReasoningAgentSignature(dspy.Signature):
     """Explain the misconception the student has based on his answer."""
     context = dspy.InputField(
         desc='History of other agents for reference. Empty if no history is available.')
@@ -75,37 +75,65 @@ class BaseAgentSignature(dspy.Signature):
     MisconceptionText = dspy.OutputField(
         desc='Explaination of the misconception the student has based on his answer find out which stage he makes mistake and conclude in one percise sentences.')
 
+class BaseAgentSignature(dspy.Signature):
+    """Explain the misconception the student has based on his answer."""
+    context = dspy.InputField(
+        desc='Debate history of other agents for reference. Empty if no history is available.')
+    QuestionText = dspy.InputField(desc='The question text.')
+    AnswerText = dspy.InputField(desc='The student wrong answer text.')
+    ConstructName = dspy.InputField()
+    SubjectName = dspy.InputField(desc="The subject of the question.")
+    CorrectAnswer = dspy.InputField(desc="The correct answer.")
+    MisconceptionText = dspy.OutputField(
+        desc='Explaination of the misconception the student has based on his answer in one percise sentences.')
+
+
 class Agent(dspy.Module):
-    def __init__(self, name, persona_promt=None):
+    def __init__(self, name, agent_type='basic', persona_promt=None):
         super().__init__()
         self.name = name
+        self.agent_type = agent_type
         self.prefix_promt = persona_promt
         self.reasoning_agent = ReasoningAgent(name=f"Reasoning {name}" , persona_promt=None)
+        self.process_reasoning = dspy.Predict(BaseReasoningAgentSignature)
         self.process = dspy.Predict(BaseAgentSignature)
 
     def forward(self, QuestionText, AnswerText, ConstructName, SubjectName, CorrectAnswer, context=None) -> str:
         # Directly pass the inputs to the process method
         try:
-            ReasoningProcess = self.reasoning_agent(
-                context=context,
-                QuestionText=QuestionText,
-                ConstructName=ConstructName,
-                SubjectName=SubjectName,
-                CorrectAnswer=CorrectAnswer,
-            )
-            
-            outputs = self.process(
-                context=context,
-                QuestionText=QuestionText,
-                AnswerText=AnswerText,
-                ConstructName=ConstructName,
-                SubjectName=SubjectName,
-                CorrectAnswer=CorrectAnswer,
-                ReasoningProcess=ReasoningProcess,
-                prefix = self.prefix_promt
-            )
+            if self.agent_type == 'basic':
+                outputs = self.process(
+                    context=context,
+                    QuestionText=QuestionText,
+                    AnswerText=AnswerText,
+                    ConstructName=ConstructName,
+                    SubjectName=SubjectName,
+                    CorrectAnswer=CorrectAnswer,
+                    prefix = self.prefix_promt
+                )
 
-            return outputs.completions[0].MisconceptionText
+                return outputs.completions[0].MisconceptionText
+            else:
+                ReasoningProcess = self.reasoning_agent(
+                    context=context,
+                    QuestionText=QuestionText,
+                    ConstructName=ConstructName,
+                    SubjectName=SubjectName,
+                    CorrectAnswer=CorrectAnswer,
+                )
+                
+                outputs = self.process_reasoning(
+                    context=context,
+                    QuestionText=QuestionText,
+                    AnswerText=AnswerText,
+                    ConstructName=ConstructName,
+                    SubjectName=SubjectName,
+                    CorrectAnswer=CorrectAnswer,
+                    ReasoningProcess=ReasoningProcess,
+                    prefix = self.prefix_promt
+                )
+
+                return outputs.completions[0].MisconceptionText
         except Exception as e:
             print(e)
             return "Failed to generate misconception explanation."

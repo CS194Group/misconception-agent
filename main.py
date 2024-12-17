@@ -40,7 +40,7 @@ init(autoreset=True)
 
 # CONSTANTS
 DEBUG: bool = True
-SEED: int = 77
+SEED: int = 777
 API: Literal['lambda', 'openai'] = 'lambda'
 MAX_TOKEN: int = 100
 ID = uuid.uuid4().hex[:8]
@@ -48,11 +48,12 @@ ID = uuid.uuid4().hex[:8]
 lm_wrapper = LanguageModel(max_tokens=MAX_TOKEN, service=API)
 custom_adapter = PrefixedChatAdapter()
 dspy.configure(lm=lm_wrapper.lm, adapter=custom_adapter)
-
+import pdb
 
 def evaluate_with_weave(evaluation_dataset: List[dspy.Example], model: dspy.Module, scorer: Callable) -> None:
+    dataset = [dspy.Example(**row).toDict() for row in evaluation_dataset]
     weave_eval = weave.Evaluation(
-        dataset=[dspy.Example(**row).toDict() for row in evaluation_dataset],
+        dataset=dataset,
         scorers=[scorer],
         evaluation_name=f"run-{ID}",
     )
@@ -69,7 +70,6 @@ def evaluate_with_weave(evaluation_dataset: List[dspy.Example], model: dspy.Modu
     print("Weave Result: " + str(result))
 
 
-
 def main(args: Config):
     weave.init(project_name="llma-agents" if not DEBUG else "llma-agents-debug")
     start = time.time()
@@ -84,11 +84,12 @@ def main(args: Config):
 
 
     # Set up Agents
-    agent_a = Agent(name="Agent A" , persona_promt=None)
-    agent_b = Agent(name="Agent B" , persona_promt=None)
-    agent_c = Agent(name="Agent C" , persona_promt=None)
-    agent_d = Agent(name="Agent D" , persona_promt=None)
-    agent_e = Agent(name="Agent E" , persona_promt=None)
+    agent_a = Agent(name="Agent A" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
+    agent_b = Agent(name="Agent B" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
+    agent_c = Agent(name="Agent C" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
+    agent_d = Agent(name="Agent D" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
+    agent_d = Agent(name="Agent D" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
+    agent_e = Agent(name="Agent E" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
 
     # agent_a = AdvancedAgent(name="Agent A" , persona_promt=Persona.AGENT_A_new)
     # agent_b = AdvancedAgent(name="Agent B" , persona_promt=Persona.AGENT_B_new)
@@ -135,6 +136,8 @@ def main(args: Config):
         print("Finished loading")
 
     # --- DO NOT CHANGE anything below this line ---
+    # evaluate_with_weave(val_data, predict, eval_manager.metric_vector_search_weave)
+
     evaluate_with_weave(val_data, compiled_predictor, eval_manager.metric_vector_search_weave)
 
     end = time.time()
@@ -168,8 +171,9 @@ if __name__ == "__main__":
     else:
         args_dict = {
             "ExchangeOfThought": {
+                "baseagent": "reasoning",
                 "mode": "multi_4",
-                "rounds": 1
+                "rounds": 1,
             },
             "Dspy": {
                 "telepropmter": {             # Nested TelepropmterConfig
@@ -177,7 +181,7 @@ if __name__ == "__main__":
                 },
                 "evaluation": {
                     "type": "multi"
-                }
+                },
             }
         }
         args = load_config(args_dict)

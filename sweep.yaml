@@ -17,10 +17,12 @@ parameters:
 
   ExchangeOfThought:
     parameters:
+      baseagent:
+        values: [basic, reasoning]
       mode:
         values: ["Report", "multi_4", "bigram"]
       rounds:
-        values: [ 1, 2]
+        values: [ 1, 2, 3]
 
 
 metric:
