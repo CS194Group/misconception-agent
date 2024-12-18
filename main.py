@@ -40,7 +40,7 @@ init(autoreset=True)
 
 # CONSTANTS
 DEBUG: bool = True
-SEED: int = 777
+SEED: int = 77777
 API: Literal['lambda', 'openai'] = 'lambda'
 MAX_TOKEN: int = 100
 ID = uuid.uuid4().hex[:8]
@@ -84,10 +84,10 @@ def main(args: Config):
 
 
     # Set up Agents
+    # pdb.set_trace()
     agent_a = Agent(name="Agent A" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
     agent_b = Agent(name="Agent B" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
     agent_c = Agent(name="Agent C" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
-    agent_d = Agent(name="Agent D" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
     agent_d = Agent(name="Agent D" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
     agent_e = Agent(name="Agent E" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
 
@@ -109,9 +109,9 @@ def main(args: Config):
             "debug": DEBUG
         }
     else:
-        predict = Agent(name="Agent A" , persona_promt=None)
+        predict = Agent(name="Agent A" , agent_type = args.ExchangeOfThought.baseagent, persona_promt=None)
         persona_prompts = {
-            "Agent A Persona": agent_a.prefix_promt,
+            "Agent A Persona": None,
             "debug": DEBUG
         }
 

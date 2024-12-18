@@ -18,11 +18,12 @@ parameters:
   ExchangeOfThought:
     parameters:
       baseagent:
-        values: ["basic", "reasoning"]
+        values: [reasoning]
       mode:
-        values: ["single"]
+        values: ["bigram"]
       rounds:
-        values: [1]
+        values: [ 1, 2]
+
 
 metric:
   name: metric_vector_search_weave.map25_score.mean

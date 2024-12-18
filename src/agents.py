@@ -102,6 +102,7 @@ class Agent(dspy.Module):
         # Directly pass the inputs to the process method
         try:
             if self.agent_type == 'basic':
+                # pdb.set_trace()
                 outputs = self.process(
                     context=context,
                     QuestionText=QuestionText,
